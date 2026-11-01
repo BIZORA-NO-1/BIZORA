@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,466 +6,486 @@
 <meta name="theme-color" content="#0b1020">
 <title>BIZORA — Business Workspace</title>
 <meta name="description" content="BIZORA is your intelligent AI-powered business management workspace.">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-:root {
-  --bg:#0b1020;
-  --panel:#111a2d;
-  --panel2:#172239;
-  --text:#f4f6ff;
-  --muted:#929db5;
-  --border:rgba(255,255,255,.08);
-  --accent:#8068ff;
-  --accent2:#a18cff;
-  --green:#37c995;
-  --red:#ff7185;
-  --shadow:0 15px 45px rgba(0,0,0,.15);
+:root{
+--bg:#0b1020;--panel:#111a2d;--panel2:#172239;
+--text:#f4f6ff;--muted:#929db5;--border:rgba(255,255,255,.08);
+--accent:#8068ff;--accent2:#a18cff;--green:#37c995;
+--red:#ff7185;--shadow:0 15px 45px rgba(0,0,0,.15);
 }
-body.light {
-  --bg:#f4f6fb;
-  --panel:#ffffff;
-  --panel2:#f0f2f9;
-  --text:#192239;
-  --muted:#73809a;
-  --border:rgba(25,34,57,.09);
-  --accent:#7057ed;
-  --accent2:#8c78fa;
-  --shadow:0 12px 35px rgba(30,40,80,.07);
+body.light{
+--bg:#f4f6fb;--panel:#fff;--panel2:#f0f2f9;
+--text:#192239;--muted:#73809a;--border:rgba(25,34,57,.09);
+--accent:#7057ed;--accent2:#8c78fa;--shadow:0 12px 35px rgba(30,40,80,.07);
 }
 *{box-sizing:border-box}
-body{
-  margin:0;background:var(--bg);color:var(--text);
-  font-family:Inter,system-ui,-apple-system,Arial,sans-serif;
-  transition:background .2s,color .2s;
-}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Arial,sans-serif;transition:background .2s,color .2s}
 button,input{font:inherit}
 button{cursor:pointer}
 .app{display:flex;min-height:100vh}
 .sidebar{
-  width:255px;flex-shrink:0;background:var(--panel);
-  border-right:1px solid var(--border);
-  padding:22px 15px;display:flex;flex-direction:column;
-  height:100vh;position:sticky;top:0;overflow-y:auto;
-  transition:transform .25s;
+width:255px;flex-shrink:0;background:var(--panel);
+border-right:1px solid var(--border);padding:22px 15px;
+display:flex;flex-direction:column;height:100vh;
+position:sticky;top:0;overflow-y:auto;transition:transform .25s;
 }
 .brand{display:flex;align-items:center;gap:11px;padding:3px 10px 25px}
-.logo{
-  width:42px;height:42px;border-radius:13px;
-  display:grid;place-items:center;
-  color:white;font-size:21px;font-weight:900;
-  background:linear-gradient(135deg,#967bff,#5741d5);
-  box-shadow:0 7px 22px #7455ee44;
-}
+.logo{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;color:white;font-size:21px;font-weight:900;background:linear-gradient(135deg,#967bff,#5741d5);box-shadow:0 7px 22px #7455ee44}
 .brand-name{font-size:21px;font-weight:850;letter-spacing:1px}
 .brand-sub{font-size:10px;color:var(--muted);margin-top:3px;letter-spacing:1.4px}
-.section-label{
-  color:var(--muted);font-size:10px;font-weight:800;
-  letter-spacing:1.4px;padding:14px 11px 7px;
-}
-.nav-item{
-  display:flex;align-items:center;gap:12px;width:100%;
-  padding:11px 12px;border:0;border-radius:10px;
-  background:transparent;color:var(--muted);
-  text-align:left;font-size:13px;margin:2px 0;
-  transition:.2s;
-}
+.section-label{color:var(--muted);font-size:10px;font-weight:800;letter-spacing:1.4px;padding:14px 11px 7px}
+.nav-item{display:flex;align-items:center;gap:12px;width:100%;padding:11px 12px;border:0;border-radius:10px;background:transparent;color:var(--muted);text-align:left;font-size:13px;margin:2px 0;transition:.2s}
 .nav-item:hover{background:var(--panel2);color:var(--text)}
-.nav-item.active{
-  background:linear-gradient(100deg,#8068ff2b,#8068ff0c);
-  color:var(--accent2);font-weight:750;
-}
+.nav-item.active{background:linear-gradient(100deg,#8068ff2b,#8068ff0c);color:var(--accent2);font-weight:750}
 .nav-icon{width:20px;text-align:center;font-size:16px}
-.nav-item .arrow{margin-left:auto;font-size:11px}
 .sidebar-bottom{margin-top:auto;padding-top:20px}
-.plan-card{
-  background:linear-gradient(140deg,#6550d6,#372b80);
-  border-radius:14px;padding:15px;color:white;margin:8px 2px 15px;
-}
+.plan-card{background:linear-gradient(140deg,#6550d6,#372b80);border-radius:14px;padding:15px;color:white;margin:8px 2px 15px}
 .plan-card strong{font-size:13px}
 .plan-card p{font-size:11px;line-height:1.6;color:#e0dcff}
-.plan-card button{
-  border:1px solid #ffffff66;background:#ffffff15;color:white;
-  border-radius:8px;padding:8px 12px;font-size:11px;
-}
-.profile{
-  display:flex;align-items:center;gap:10px;
-  border-top:1px solid var(--border);padding:16px 7px 0;
-}
-.avatar{
-  width:36px;height:36px;border-radius:50%;
-  display:grid;place-items:center;background:#6654d8;color:white;
-  font-weight:800;font-size:13px;
-}
+.plan-card button{border:1px solid #ffffff66;background:#ffffff15;color:white;border-radius:8px;padding:8px 12px;font-size:11px}
+.profile{display:flex;align-items:center;gap:10px;border-top:1px solid var(--border);padding:16px 7px 0}
+.avatar{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:#6654d8;color:white;font-weight:800;font-size:13px;flex-shrink:0}
 .profile-info{min-width:0;flex:1}
-.profile-info strong{display:block;font-size:12px}
+.profile-info strong{display:block;font-size:12px;overflow:hidden;text-overflow:ellipsis}
 .profile-info span{font-size:10px;color:var(--muted)}
 .main{flex:1;min-width:0}
-.topbar{
-  height:72px;border-bottom:1px solid var(--border);
-  display:flex;align-items:center;justify-content:space-between;
-  padding:0 30px;background:var(--panel);
-  position:sticky;top:0;z-index:10;
-}
+.topbar{height:72px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 30px;background:var(--panel);position:sticky;top:0;z-index:10}
 .top-left,.top-right{display:flex;align-items:center;gap:13px}
-.menu-btn{
-  display:none;background:transparent;border:0;color:var(--text);
-  font-size:22px;
-}
-.search{
-  display:flex;align-items:center;gap:9px;
-  background:var(--panel2);border:1px solid var(--border);
-  padding:9px 12px;border-radius:10px;width:260px;
-}
-.search input{
-  width:100%;border:0;outline:0;background:transparent;
-  color:var(--text);font-size:12px;
-}
+.menu-btn{display:none;background:transparent;border:0;color:var(--text);font-size:22px}
+.search{display:flex;align-items:center;gap:9px;background:var(--panel2);border:1px solid var(--border);padding:9px 12px;border-radius:10px;width:260px}
+.search input{width:100%;border:0;outline:0;background:transparent;color:var(--text);font-size:12px}
 .search input::placeholder{color:var(--muted)}
-.icon-btn{
-  width:37px;height:37px;border:1px solid var(--border);
-  border-radius:10px;background:var(--panel2);color:var(--text);
-  font-size:16px;position:relative;
-}
-.dot{
-  width:7px;height:7px;background:var(--red);border-radius:50%;
-  position:absolute;right:7px;top:7px;
-}
+.icon-btn{width:37px;height:37px;border:1px solid var(--border);border-radius:10px;background:var(--panel2);color:var(--text);font-size:16px;position:relative}
+.dot{width:7px;height:7px;background:var(--red);border-radius:50%;position:absolute;right:7px;top:7px}
 .page{padding:28px 30px 50px;max-width:1600px;margin:auto}
-.page-heading{
-  display:flex;align-items:center;justify-content:space-between;
-  gap:15px;margin-bottom:24px;flex-wrap:wrap;
-}
+.page-heading{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:24px;flex-wrap:wrap}
 .page-heading h1{font-size:25px;margin:0 0 7px;font-weight:800}
 .page-heading p{font-size:12px;color:var(--muted);margin:0}
-.primary-btn{
-  background:linear-gradient(120deg,#8068ff,#6047dc);
-  color:white;border:0;border-radius:10px;padding:11px 16px;
-  font-size:12px;font-weight:750;box-shadow:0 6px 18px #7057ed33;
-}
-.secondary-btn{
-  background:var(--panel);color:var(--text);
-  border:1px solid var(--border);border-radius:10px;
-  padding:10px 14px;font-size:12px;
-}
-.stats{
-  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
-  gap:15px;margin-bottom:20px;
-}
-.card{
-  background:var(--panel);border:1px solid var(--border);
-  border-radius:15px;padding:18px;box-shadow:var(--shadow);
-  min-width:0;
-}
+.primary-btn{background:linear-gradient(120deg,#8068ff,#6047dc);color:white;border:0;border-radius:10px;padding:11px 16px;font-size:12px;font-weight:750;box-shadow:0 6px 18px #7057ed33}
+.secondary-btn{background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:12px}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px;margin-bottom:20px}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:15px;padding:18px;box-shadow:var(--shadow);min-width:0}
 .stat-top{display:flex;align-items:center;justify-content:space-between}
 .stat-name{font-size:11px;color:var(--muted);font-weight:600}
-.stat-icon{
-  width:36px;height:36px;border-radius:11px;
-  background:#8068ff20;display:grid;place-items:center;font-size:17px;
-}
+.stat-icon{width:36px;height:36px;border-radius:11px;background:#8068ff20;display:grid;place-items:center;font-size:17px}
 .stat-value{font-size:26px;font-weight:850;margin:14px 0 7px}
 .stat-note{font-size:10px;color:var(--muted)}
-.positive{color:var(--green)}
-.content-grid{
-  display:grid;grid-template-columns:minmax(0,1.65fr) minmax(250px,1fr);
-  gap:16px;margin-bottom:18px;
-}
-.card-heading{
-  display:flex;align-items:center;justify-content:space-between;
-  gap:10px;margin-bottom:18px;
-}
+.content-grid{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(250px,1fr);gap:16px;margin-bottom:18px}
+.card-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:18px}
 .card-heading h3{font-size:14px;margin:0}
 .card-heading span{font-size:10px;color:var(--muted)}
 .chart-area{height:210px;position:relative}
 .chart-area svg{width:100%;height:100%;overflow:visible}
-.quick-grid{
-  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;
-}
-.quick{
-  background:var(--panel2);border:1px solid var(--border);
-  border-radius:12px;padding:15px 10px;text-align:center;
-  color:var(--text);transition:.2s;
-}
+.quick-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.quick{background:var(--panel2);border:1px solid var(--border);border-radius:12px;padding:15px 10px;text-align:center;color:var(--text);transition:.2s}
 .quick:hover{border-color:var(--accent);transform:translateY(-2px)}
 .quick-icon{font-size:23px;margin-bottom:9px}
 .quick strong{display:block;font-size:11px}
 .quick small{display:block;color:var(--muted);font-size:9px;margin-top:5px}
 .activity{display:flex;flex-direction:column;gap:0}
-.activity-item{
-  display:flex;align-items:center;gap:11px;
-  padding:12px 0;border-bottom:1px solid var(--border);
-}
+.activity-item{display:flex;align-items:center;gap:11px;padding:12px 0;border-bottom:1px solid var(--border)}
 .activity-item:last-child{border:0}
-.activity-icon{
-  width:34px;height:34px;border-radius:10px;
-  background:var(--panel2);display:grid;place-items:center;
-}
+.activity-icon{width:34px;height:34px;border-radius:10px;background:var(--panel2);display:grid;place-items:center}
 .activity-info{flex:1;min-width:0}
 .activity-info strong{font-size:11px;display:block}
 .activity-info span{font-size:10px;color:var(--muted)}
 .activity-time{font-size:9px;color:var(--muted)}
-.module-grid{
-  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px;
-}
-.module-card{
-  background:var(--panel);border:1px solid var(--border);
-  border-radius:14px;padding:18px;cursor:pointer;transition:.2s;
-}
+.module-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}
+.module-card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:18px;cursor:pointer;transition:.2s}
 .module-card:hover{border-color:var(--accent);transform:translateY(-2px)}
 .module-card .module-icon{font-size:23px;margin-bottom:13px}
 .module-card h3{font-size:13px;margin:0 0 7px}
 .module-card p{font-size:11px;line-height:1.6;color:var(--muted);margin:0}
 .module-card .open-label{display:block;margin-top:15px;color:var(--accent2);font-size:10px;font-weight:700}
-.empty-page{
-  text-align:center;padding:65px 20px;
-  background:var(--panel);border:1px solid var(--border);
-  border-radius:16px;
-}
+.empty-page{text-align:center;padding:65px 20px;background:var(--panel);border:1px solid var(--border);border-radius:16px}
 .empty-page .big-icon{font-size:43px}
 .empty-page h2{font-size:20px}
 .empty-page p{font-size:12px;color:var(--muted);max-width:400px;margin:0 auto 18px;line-height:1.7}
-.toast{
-  position:fixed;bottom:22px;right:22px;background:var(--panel2);
-  color:var(--text);border:1px solid var(--border);
-  padding:13px 18px;border-radius:11px;font-size:12px;
-  box-shadow:var(--shadow);z-index:50;display:none;
-}
+.toast{position:fixed;bottom:22px;right:22px;background:var(--panel2);color:var(--text);border:1px solid var(--border);padding:13px 18px;border-radius:11px;font-size:12px;box-shadow:var(--shadow);z-index:10001;display:none;max-width:90%}
 .overlay{display:none}
-@media(max-width:1100px){
- .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
- .module-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
-}
+
+/* AUTH */
+.auth-screen{position:fixed;inset:0;z-index:10000;background:#0b1020;display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto}
+.auth-box{width:100%;max-width:410px;background:#111a2d;color:#f4f6ff;padding:30px;border-radius:19px;border:1px solid #ffffff18;box-shadow:0 20px 60px #0005}
+.auth-logo{text-align:center;font-size:32px;font-weight:900;letter-spacing:2px;color:#a18cff}
+.auth-sub{text-align:center;color:#929db5;font-size:12px;margin:7px 0 25px}
+.auth-box h2{text-align:center;font-size:22px;margin:0 0 8px}
+.auth-description{text-align:center;color:#929db5;font-size:12px;margin:0 0 22px}
+.auth-input{width:100%;padding:14px;margin:7px 0;background:#172239;color:white;border:1px solid #ffffff22;border-radius:9px;outline:none;font-size:13px}
+.auth-input:focus{border-color:#8068ff}
+.auth-submit{width:100%;padding:14px;margin-top:12px;background:linear-gradient(120deg,#8068ff,#6047dc);color:white;border:0;border-radius:9px;font-weight:800}
+.auth-submit:disabled{opacity:.6;cursor:wait}
+.auth-switch{background:none;border:0;color:#a18cff;font-weight:bold}
+.auth-message{font-size:12px;text-align:center;line-height:1.6;margin-top:15px;color:#ff9aaa;overflow-wrap:anywhere}
+.auth-foot{text-align:center;color:#929db5;font-size:10px;margin-top:20px}
+@media(max-width:1100px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.module-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:760px){
- .sidebar{
-  position:fixed;left:0;top:0;z-index:30;
-  transform:translateX(-105%);height:100dvh;
- }
- .sidebar.open{transform:translateX(0)}
- .overlay{
-  position:fixed;inset:0;background:#0009;z-index:25;
- }
- .overlay.show{display:block}
- .menu-btn{display:block}
- .topbar{height:62px;padding:0 15px}
- .search{width:min(42vw,200px)}
- .page{padding:22px 15px 35px}
- .page-heading h1{font-size:22px}
- .content-grid{grid-template-columns:1fr}
- .quick-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
- .module-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.sidebar{position:fixed;left:0;top:0;z-index:30;transform:translateX(-105%);height:100dvh}
+.sidebar.open{transform:translateX(0)}
+.overlay{position:fixed;inset:0;background:#0009;z-index:25}
+.overlay.show{display:block}
+.menu-btn{display:block}
+.topbar{height:62px;padding:0 15px}
+.search{width:min(42vw,200px)}
+.page{padding:22px 15px 35px}
+.page-heading h1{font-size:22px}
+.content-grid{grid-template-columns:1fr}
+.quick-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.module-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media(max-width:420px){
- .stats{gap:9px}
- .card{padding:13px}
- .stat-value{font-size:22px}
- .module-grid{grid-template-columns:1fr}
- .search{width:125px}
- .top-right{gap:7px}
+.stats{gap:9px}
+.card{padding:13px}
+.stat-value{font-size:22px}
+.module-grid{grid-template-columns:1fr}
+.search{width:125px}
+.top-right{gap:7px}
+.auth-box{padding:23px}
 }
 </style>
 </head>
 
 <body>
-<div class="app">
+
+<!-- LOGIN / SIGN UP -->
+<div class="auth-screen" id="authScreen">
+ <div class="auth-box">
+  <div class="auth-logo">BIZORA</div>
+  <div class="auth-sub">YOUR BUSINESS WORKSPACE</div>
+  <h2 id="authTitle">Welcome Back</h2>
+  <p class="auth-description" id="authDescription">Login to your account</p>
+
+  <input class="auth-input" id="authName" type="text" placeholder="Your business / full name" autocomplete="name" style="display:none">
+  <input class="auth-input" id="authEmail" type="email" placeholder="Email address" autocomplete="email">
+  <input class="auth-input" id="authPassword" type="password" placeholder="Password (minimum 6 characters)" autocomplete="current-password">
+
+  <button class="auth-submit" id="authSubmit" onclick="handleAuth()">Login</button>
+
+  <p style="text-align:center;font-size:12px;color:#929db5;margin-top:20px">
+   <span id="authSwitchText">Don't have an account?</span>
+   <button class="auth-switch" id="authSwitch" onclick="switchAuth()">Sign Up</button>
+  </p>
+  <p class="auth-message" id="authMessage" role="status"></p>
+  <div class="auth-foot">Secure account authentication by Supabase</div>
+ </div>
+</div>
+
+<div class="app" id="app" style="visibility:hidden">
 
 <aside class="sidebar" id="sidebar">
-  <div class="brand">
-    <div class="logo">B</div>
-    <div>
-      <div class="brand-name">BIZORA</div>
-      <div class="brand-sub">BUSINESS WORKSPACE</div>
-    </div>
+ <div class="brand">
+  <div class="logo">B</div>
+  <div><div class="brand-name">BIZORA</div><div class="brand-sub">BUSINESS WORKSPACE</div></div>
+ </div>
+
+ <div class="section-label">WORKSPACE</div>
+ <button class="nav-item active" data-page="Overview"><span class="nav-icon">▦</span>Overview</button>
+ <button class="nav-item" data-page="AI Assistant"><span class="nav-icon">✦</span>AI Assistant</button>
+
+ <div class="section-label">BUSINESS MANAGEMENT</div>
+ <button class="nav-item" data-page="Products & Inventory"><span class="nav-icon">▣</span>Products & Inventory</button>
+ <button class="nav-item" data-page="Customers (CRM)"><span class="nav-icon">♙</span>Customers (CRM)</button>
+ <button class="nav-item" data-page="Orders & Sales"><span class="nav-icon">🛍</span>Orders & Sales</button>
+ <button class="nav-item" data-page="Invoices & Payments"><span class="nav-icon">▤</span>Invoices & Payments</button>
+ <button class="nav-item" data-page="Suppliers & Expenses"><span class="nav-icon">⇄</span>Suppliers & Expenses</button>
+
+ <div class="section-label">AI BUSINESS TOOLS</div>
+ <button class="nav-item" data-page="Customer Support"><span class="nav-icon">☏</span>Customer Support</button>
+ <button class="nav-item" data-page="Product Descriptions"><span class="nav-icon">✎</span>Product Descriptions</button>
+ <button class="nav-item" data-page="AI Marketing"><span class="nav-icon">✧</span>AI Marketing</button>
+ <button class="nav-item" data-page="Business Advisor"><span class="nav-icon">◈</span>Business Advisor</button>
+
+ <div class="section-label">MARKETING & GROWTH</div>
+ <button class="nav-item" data-page="Social Media Manager"><span class="nav-icon">◎</span>Social Media Manager</button>
+ <button class="nav-item" data-page="Advertisement Creator"><span class="nav-icon">◉</span>Advertisement Creator</button>
+ <button class="nav-item" data-page="Content & Posts"><span class="nav-icon">▧</span>Content & Posts</button>
+ <button class="nav-item" data-page="Hashtag Generator"><span class="nav-icon">#</span>Hashtag Generator</button>
+ <button class="nav-item" data-page="Campaign Manager"><span class="nav-icon">◷</span>Campaign Manager</button>
+
+ <div class="section-label">COMMUNICATION</div>
+ <button class="nav-item" data-page="Customer Inbox"><span class="nav-icon">✉</span>Customer Inbox</button>
+ <button class="nav-item" data-page="Live Chat"><span class="nav-icon">☷</span>Live Chat</button>
+ <button class="nav-item" data-page="Email Management"><span class="nav-icon">＠</span>Email Management</button>
+ <button class="nav-item" data-page="WhatsApp Integration"><span class="nav-icon">◉</span>WhatsApp Integration</button>
+ <button class="nav-item" data-page="Customer Feedback"><span class="nav-icon">☆</span>Customer Feedback</button>
+
+ <div class="section-label">REPORTS & ANALYTICS</div>
+ <button class="nav-item" data-page="Business Analytics"><span class="nav-icon">▥</span>Business Analytics</button>
+ <button class="nav-item" data-page="Sales Reports"><span class="nav-icon">▤</span>Sales Reports</button>
+ <button class="nav-item" data-page="Customer Reports"><span class="nav-icon">♧</span>Customer Reports</button>
+ <button class="nav-item" data-page="Financial Reports"><span class="nav-icon">＄</span>Financial Reports</button>
+ <button class="nav-item" data-page="Performance Tracking"><span class="nav-icon">↗</span>Performance Tracking</button>
+
+ <div class="section-label">SYSTEM</div>
+ <button class="nav-item" data-page="Workflow Automation"><span class="nav-icon">⚙</span>Workflow Automation</button>
+ <button class="nav-item" data-page="Scheduled Tasks"><span class="nav-icon">◷</span>Scheduled Tasks</button>
+ <button class="nav-item" data-page="Team Management"><span class="nav-icon">♧</span>Team Management</button>
+ <button class="nav-item" data-page="Roles & Permissions"><span class="nav-icon">♜</span>Roles & Permissions</button>
+ <button class="nav-item" data-page="App Integrations"><span class="nav-icon">⌘</span>App Integrations</button>
+ <button class="nav-item" data-page="Subscription & Billing"><span class="nav-icon">＄</span>Subscription & Billing</button>
+ <button class="nav-item" data-page="Security & Settings"><span class="nav-icon">⚙</span>Security & Settings</button>
+ <button class="nav-item" data-page="Help & Support"><span class="nav-icon">?</span>Help & Support</button>
+
+ <div class="sidebar-bottom">
+  <div class="plan-card">
+   <strong>✦ BIZORA Workspace</strong>
+   <p>Your business tools in one place. More powerful features are coming soon.</p>
+   <button onclick="notify('Plan upgrades will be available later.')">Explore plans</button>
   </div>
-
-  <div class="section-label">WORKSPACE</div>
-  <button class="nav-item active" data-page="Overview"><span class="nav-icon">▦</span>Overview</button>
-  <button class="nav-item" data-page="AI Assistant"><span class="nav-icon">✦</span>AI Assistant</button>
-
-  <div class="section-label">BUSINESS MANAGEMENT</div>
-  <button class="nav-item" data-page="Products & Inventory"><span class="nav-icon">▣</span>Products & Inventory</button>
-  <button class="nav-item" data-page="Customers (CRM)"><span class="nav-icon">♙</span>Customers (CRM)</button>
-  <button class="nav-item" data-page="Orders & Sales"><span class="nav-icon">🛍</span>Orders & Sales</button>
-  <button class="nav-item" data-page="Invoices & Payments"><span class="nav-icon">▤</span>Invoices & Payments</button>
-  <button class="nav-item" data-page="Suppliers & Expenses"><span class="nav-icon">⇄</span>Suppliers & Expenses</button>
-
-  <div class="section-label">AI BUSINESS TOOLS</div>
-  <button class="nav-item" data-page="Customer Support"><span class="nav-icon">☏</span>Customer Support</button>
-  <button class="nav-item" data-page="Product Descriptions"><span class="nav-icon">✎</span>Product Descriptions</button>
-  <button class="nav-item" data-page="AI Marketing"><span class="nav-icon">✧</span>AI Marketing</button>
-  <button class="nav-item" data-page="Business Advisor"><span class="nav-icon">◈</span>Business Advisor</button>
-
-  <div class="section-label">MARKETING & GROWTH</div>
-  <button class="nav-item" data-page="Social Media Manager"><span class="nav-icon">◎</span>Social Media Manager</button>
-  <button class="nav-item" data-page="Advertisement Creator"><span class="nav-icon">◉</span>Advertisement Creator</button>
-  <button class="nav-item" data-page="Content & Posts"><span class="nav-icon">▧</span>Content & Posts</button>
-  <button class="nav-item" data-page="Hashtag Generator"><span class="nav-icon">#</span>Hashtag Generator</button>
-  <button class="nav-item" data-page="Campaign Manager"><span class="nav-icon">◷</span>Campaign Manager</button>
-
-  <div class="section-label">COMMUNICATION</div>
-  <button class="nav-item" data-page="Customer Inbox"><span class="nav-icon">✉</span>Customer Inbox</button>
-  <button class="nav-item" data-page="Live Chat"><span class="nav-icon">☷</span>Live Chat</button>
-  <button class="nav-item" data-page="Email Management"><span class="nav-icon">＠</span>Email Management</button>
-  <button class="nav-item" data-page="WhatsApp Integration"><span class="nav-icon">◉</span>WhatsApp Integration</button>
-  <button class="nav-item" data-page="Customer Feedback"><span class="nav-icon">☆</span>Customer Feedback</button>
-
-  <div class="section-label">REPORTS & ANALYTICS</div>
-  <button class="nav-item" data-page="Business Analytics"><span class="nav-icon">▥</span>Business Analytics</button>
-  <button class="nav-item" data-page="Sales Reports"><span class="nav-icon">▤</span>Sales Reports</button>
-  <button class="nav-item" data-page="Customer Reports"><span class="nav-icon">♧</span>Customer Reports</button>
-  <button class="nav-item" data-page="Financial Reports"><span class="nav-icon">＄</span>Financial Reports</button>
-  <button class="nav-item" data-page="Performance Tracking"><span class="nav-icon">↗</span>Performance Tracking</button>
-
-  <div class="section-label">SYSTEM</div>
-  <button class="nav-item" data-page="Workflow Automation"><span class="nav-icon">⚙</span>Workflow Automation</button>
-  <button class="nav-item" data-page="Scheduled Tasks"><span class="nav-icon">◷</span>Scheduled Tasks</button>
-  <button class="nav-item" data-page="Team Management"><span class="nav-icon">♧</span>Team Management</button>
-  <button class="nav-item" data-page="Roles & Permissions"><span class="nav-icon">♜</span>Roles & Permissions</button>
-  <button class="nav-item" data-page="App Integrations"><span class="nav-icon">⌘</span>App Integrations</button>
-  <button class="nav-item" data-page="Subscription & Billing"><span class="nav-icon">＄</span>Subscription & Billing</button>
-  <button class="nav-item" data-page="Security & Settings"><span class="nav-icon">⚙</span>Security & Settings</button>
-  <button class="nav-item" data-page="Help & Support"><span class="nav-icon">?</span>Help & Support</button>
-
-  <div class="sidebar-bottom">
-    <div class="plan-card">
-      <strong>✦ BIZORA Workspace</strong>
-      <p>Your business tools in one place. More powerful features are coming soon.</p>
-      <button onclick="notify('Plan upgrades will be available later.')">Explore plans</button>
-    </div>
-    <div class="profile">
-      <div class="avatar">B</div>
-      <div class="profile-info">
-        <strong>Business Owner</strong>
-        <span>Workspace account</span>
-      </div>
-      <button class="icon-btn" onclick="notify('Account settings coming soon.')">⋯</button>
-    </div>
+  <div class="profile">
+   <div class="avatar" id="profileAvatar">B</div>
+   <div class="profile-info">
+    <strong id="profileName">Business Owner</strong>
+    <span id="profileEmail">Workspace account</span>
+   </div>
+   <button class="icon-btn" onclick="logout()" title="Logout">↪</button>
   </div>
+ </div>
 </aside>
 
-<div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+<div class="overlay" id="overlay" onclick="toggleMenu(false)"></div>
 
 <main class="main">
-  <header class="topbar">
-    <div class="top-left">
-      <button class="menu-btn" onclick="toggleMenu()">☰</button>
-      <div class="search">
-        <span>⌕</span>
-        <input id="searchInput" placeholder="Search tools..." oninput="searchTools(this.value)">
-      </div>
-    </div>
-    <div class="top-right">
-      <button class="icon-btn" onclick="toggleTheme()" title="Change theme">◐</button>
-      <button class="icon-btn" onclick="notify('You have no new notifications.')">♧<span class="dot"></span></button>
-      <div class="avatar">B</div>
-    </div>
-  </header>
-
-  <div class="page" id="page">
-    <div class="page-heading">
-      <div>
-        <h1>Business Overview</h1>
-        <p>Welcome to BIZORA. Manage your business from one workspace.</p>
-      </div>
-      <button class="primary-btn" onclick="goTo('AI Assistant')">✦ Open AI Assistant</button>
-    </div>
-
-    <section class="stats">
-      <div class="card">
-        <div class="stat-top"><span class="stat-name">Total Products</span><span class="stat-icon">▣</span></div>
-        <div class="stat-value">—</div><div class="stat-note">Connect your product database</div>
-      </div>
-      <div class="card">
-        <div class="stat-top"><span class="stat-name">Total Customers</span><span class="stat-icon">♙</span></div>
-        <div class="stat-value">—</div><div class="stat-note">Customer records will appear here</div>
-      </div>
-      <div class="card">
-        <div class="stat-top"><span class="stat-name">Total Orders</span><span class="stat-icon">🛍</span></div>
-        <div class="stat-value">—</div><div class="stat-note">Connect order management</div>
-      </div>
-      <div class="card">
-        <div class="stat-top"><span class="stat-name">Revenue</span><span class="stat-icon">＄</span></div>
-        <div class="stat-value">—</div><div class="stat-note">Sales analytics coming soon</div>
-      </div>
-    </section>
-
-    <section class="content-grid">
-      <div class="card">
-        <div class="card-heading">
-          <h3>Business Performance</h3>
-          <span>Analytics preview</span>
-        </div>
-        <div class="chart-area">
-          <svg viewBox="0 0 600 210" preserveAspectRatio="none">
-            <defs>
-              <linearGradient id="area" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#8068ff" stop-opacity=".28"/>
-                <stop offset="100%" stop-color="#8068ff" stop-opacity="0"/>
-              </linearGradient>
-            </defs>
-            <g stroke="currentColor" opacity=".10" stroke-dasharray="4 5">
-              <path d="M0 30H600 M0 75H600 M0 120H600 M0 165H600"/>
-            </g>
-            <path d="M0 165 L70 143 L140 153 L210 105 L280 120 L350 78 L420 100 L490 48 L560 65 L600 25 L600 190 L0 190 Z" fill="url(#area)"/>
-            <path d="M0 165 L70 143 L140 153 L210 105 L280 120 L350 78 L420 100 L490 48 L560 65 L600 25" fill="none" stroke="#927aff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-            <g fill="#927aff">
-              <circle cx="70" cy="143" r="4"/><circle cx="210" cy="105" r="4"/>
-              <circle cx="350" cy="78" r="4"/><circle cx="490" cy="48" r="4"/>
-            </g>
-          </svg>
-        </div>
-        <div class="card-heading"><span>Chart is a design preview, not live business data.</span></div>
-      </div>
-
-      <div class="card">
-        <div class="card-heading"><h3>Recent Activity</h3><span>Activity feed</span></div>
-        <div class="activity">
-          <div class="activity-item">
-            <div class="activity-icon">✦</div>
-            <div class="activity-info"><strong>AI Assistant</strong><span>Ready to help your business</span></div>
-            <span class="activity-time">Ready</span>
-          </div>
-          <div class="activity-item">
-            <div class="activity-icon">▣</div>
-            <div class="activity-info"><strong>Products</strong><span>Database connection pending</span></div>
-            <span class="activity-time">Setup</span>
-          </div>
-          <div class="activity-item">
-            <div class="activity-icon">♙</div>
-            <div class="activity-info"><strong>Customers</strong><span>CRM setup pending</span></div>
-            <span class="activity-time">Setup</span>
-          </div>
-          <div class="activity-item">
-            <div class="activity-icon">↗</div>
-            <div class="activity-info"><strong>Analytics</strong><span>Waiting for business data</span></div>
-            <span class="activity-time">Setup</span>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="card" style="margin-bottom:18px">
-      <div class="card-heading">
-        <h3>Quick Actions</h3><span>Shortcuts</span>
-      </div>
-      <div class="quick-grid">
-        <button class="quick" onclick="goTo('Products & Inventory')"><div class="quick-icon">▣</div><strong>Add Product</strong><small>Manage inventory</small></button>
-        <button class="quick" onclick="goTo('Customers (CRM)')"><div class="quick-icon">♙</div><strong>Add Customer</strong><small>Customer records</small></button>
-        <button class="quick" onclick="goTo('AI Marketing')"><div class="quick-icon">✧</div><strong>Create Marketing</strong><small>AI marketing tools</small></button>
-        <button class="quick" onclick="goTo('Customer Support')"><div class="quick-icon">☏</div><strong>Customer Support</strong><small>Help customers</small></button>
-      </div>
-    </section>
-
-    <section>
-      <div class="card-heading"><h3>Business Modules</h3><span>Explore workspace</span></div>
-      <div class="module-grid" id="moduleGrid"></div>
-    </section>
+ <header class="topbar">
+  <div class="top-left">
+   <button class="menu-btn" onclick="toggleMenu()">☰</button>
+   <div class="search"><span>⌕</span><input id="searchInput" placeholder="Search tools..." oninput="searchTools(this.value)"></div>
   </div>
+  <div class="top-right">
+   <button class="icon-btn" onclick="toggleTheme()" title="Change theme">◐</button>
+   <button class="icon-btn" onclick="notify('You have no new notifications.')">♧<span class="dot"></span></button>
+   <div class="avatar" id="topAvatar">B</div>
+  </div>
+ </header>
+
+ <div class="page" id="page">
+  <div class="page-heading">
+   <div><h1>Business Overview</h1><p>Welcome to BIZORA. Manage your business from one workspace.</p></div>
+   <button class="primary-btn" onclick="goTo('AI Assistant')">✦ Open AI Assistant</button>
+  </div>
+
+  <section class="stats">
+   <div class="card"><div class="stat-top"><span class="stat-name">Total Products</span><span class="stat-icon">▣</span></div><div class="stat-value">—</div><div class="stat-note">Connect your product database</div></div>
+   <div class="card"><div class="stat-top"><span class="stat-name">Total Customers</span><span class="stat-icon">♙</span></div><div class="stat-value">—</div><div class="stat-note">Customer records will appear here</div></div>
+   <div class="card"><div class="stat-top"><span class="stat-name">Total Orders</span><span class="stat-icon">🛍</span></div><div class="stat-value">—</div><div class="stat-note">Connect order management</div></div>
+   <div class="card"><div class="stat-top"><span class="stat-name">Revenue</span><span class="stat-icon">＄</span></div><div class="stat-value">—</div><div class="stat-note">Sales analytics coming soon</div></div>
+  </section>
+
+  <section class="content-grid">
+   <div class="card">
+    <div class="card-heading"><h3>Business Performance</h3><span>Analytics preview</span></div>
+    <div class="chart-area">
+     <svg viewBox="0 0 600 210" preserveAspectRatio="none">
+      <defs><linearGradient id="area" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#8068ff" stop-opacity=".28"/><stop offset="100%" stop-color="#8068ff" stop-opacity="0"/></linearGradient></defs>
+      <g stroke="currentColor" opacity=".10" stroke-dasharray="4 5"><path d="M0 30H600 M0 75H600 M0 120H600 M0 165H600"/></g>
+      <path d="M0 165 L70 143 L140 153 L210 105 L280 120 L350 78 L420 100 L490 48 L560 65 L600 25 L600 190 L0 190 Z" fill="url(#area)"/>
+      <path d="M0 165 L70 143 L140 153 L210 105 L280 120 L350 78 L420 100 L490 48 L560 65 L600 25" fill="none" stroke="#927aff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      <g fill="#927aff"><circle cx="70" cy="143" r="4"/><circle cx="210" cy="105" r="4"/><circle cx="350" cy="78" r="4"/><circle cx="490" cy="48" r="4"/></g>
+     </svg>
+    </div>
+    <div class="card-heading"><span>Chart is a design preview, not live business data.</span></div>
+   </div>
+   <div class="card">
+    <div class="card-heading"><h3>Recent Activity</h3><span>Activity feed</span></div>
+    <div class="activity">
+     <div class="activity-item"><div class="activity-icon">✦</div><div class="activity-info"><strong>AI Assistant</strong><span>Ready to help your business</span></div><span class="activity-time">Ready</span></div>
+     <div class="activity-item"><div class="activity-icon">▣</div><div class="activity-info"><strong>Products</strong><span>Database connection pending</span></div><span class="activity-time">Setup</span></div>
+     <div class="activity-item"><div class="activity-icon">♙</div><div class="activity-info"><strong>Customers</strong><span>CRM setup pending</span></div><span class="activity-time">Setup</span></div>
+     <div class="activity-item"><div class="activity-icon">↗</div><div class="activity-info"><strong>Analytics</strong><span>Waiting for business data</span></div><span class="activity-time">Setup</span></div>
+    </div>
+   </div>
+  </section>
+
+  <section class="card" style="margin-bottom:18px">
+   <div class="card-heading"><h3>Quick Actions</h3><span>Shortcuts</span></div>
+   <div class="quick-grid">
+    <button class="quick" onclick="goTo('Products & Inventory')"><div class="quick-icon">▣</div><strong>Add Product</strong><small>Manage inventory</small></button>
+    <button class="quick" onclick="goTo('Customers (CRM)')"><div class="quick-icon">♙</div><strong>Add Customer</strong><small>Customer records</small></button>
+    <button class="quick" onclick="goTo('AI Marketing')"><div class="quick-icon">✧</div><strong>Create Marketing</strong><small>AI marketing tools</small></button>
+    <button class="quick" onclick="goTo('Customer Support')"><div class="quick-icon">☏</div><strong>Customer Support</strong><small>Help customers</small></button>
+   </div>
+  </section>
+
+  <section>
+   <div class="card-heading"><h3>Business Modules</h3><span>Explore workspace</span></div>
+   <div class="module-grid" id="moduleGrid"></div>
+  </section>
+ </div>
 </main>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-const moduleData = [
+/* SUPABASE CONNECTION */
+const SUPABASE_URL = "https://uidalntoqcwsxxcplctl.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_O4cxJaXrIMWfP2S63HQd8w_KD9yHwCF";
+
+const supabaseClient = window.supabase.createClient(
+ SUPABASE_URL,
+ SUPABASE_PUBLISHABLE_KEY
+);
+
+let authMode = "login";
+let currentUser = null;
+
+const authScreen = document.getElementById("authScreen");
+const app = document.getElementById("app");
+const authMessage = document.getElementById("authMessage");
+
+function showAuth(){
+ authScreen.style.display="flex";
+ app.style.visibility="hidden";
+}
+
+function showApp(user){
+ currentUser=user;
+ authScreen.style.display="none";
+ app.style.visibility="visible";
+
+ const email=user.email || "Business Owner";
+ const displayName=user.user_metadata?.full_name || email.split("@")[0];
+ const initial=(displayName.trim()[0] || "B").toUpperCase();
+
+ document.getElementById("profileName").textContent=displayName;
+ document.getElementById("profileEmail").textContent=email;
+ document.getElementById("profileAvatar").textContent=initial;
+ document.getElementById("topAvatar").textContent=initial;
+}
+
+function switchAuth(){
+ authMode=authMode==="login"?"signup":"login";
+
+ document.getElementById("authTitle").textContent=
+  authMode==="login"?"Welcome Back":"Create Account";
+
+ document.getElementById("authDescription").textContent=
+  authMode==="login"?"Login to your account":"Create your BIZORA account";
+
+ document.getElementById("authSubmit").textContent=
+  authMode==="login"?"Login":"Create Account";
+
+ document.getElementById("authSwitchText").textContent=
+  authMode==="login"?"Don't have an account?":"Already have an account?";
+
+ document.getElementById("authSwitch").textContent=
+  authMode==="login"?"Sign Up":"Login";
+
+ document.getElementById("authName").style.display=
+  authMode==="signup"?"block":"none";
+
+ document.getElementById("authPassword").autocomplete=
+  authMode==="login"?"current-password":"new-password";
+
+ authMessage.textContent="";
+ authMessage.style.color="#ff9aaa";
+}
+
+async function handleAuth(){
+ const email=document.getElementById("authEmail").value.trim();
+ const password=document.getElementById("authPassword").value;
+ const fullName=document.getElementById("authName").value.trim();
+ const button=document.getElementById("authSubmit");
+
+ if(!email || !password){
+  authMessage.textContent="Please enter your email and password.";
+  return;
+ }
+
+ if(password.length<6){
+  authMessage.textContent="Password must be at least 6 characters.";
+  return;
+ }
+
+ if(authMode==="signup" && !fullName){
+  authMessage.textContent="Please enter your name.";
+  return;
+ }
+
+ button.disabled=true;
+ button.textContent="Please wait...";
+ authMessage.textContent="";
+
+ try{
+  if(authMode==="signup"){
+   const {data,error}=await supabaseClient.auth.signUp({
+    email:email,
+    password:password,
+    options:{data:{full_name:fullName}}
+   });
+
+   if(error) throw error;
+
+   if(data.session){
+    authMessage.style.color="#37c995";
+    authMessage.textContent="Account created successfully!";
+    showApp(data.session.user);
+   }else{
+    authMessage.style.color="#37c995";
+    authMessage.textContent="Account created. Please check your email and confirm your account before logging in.";
+   }
+  }else{
+   const {data,error}=await supabaseClient.auth.signInWithPassword({
+    email:email,
+    password:password
+   });
+
+   if(error) throw error;
+   showApp(data.user);
+  }
+ }catch(error){
+  authMessage.style.color="#ff7185";
+  authMessage.textContent=error.message || "Something went wrong. Please try again.";
+ }finally{
+  button.disabled=false;
+  button.textContent=authMode==="login"?"Login":"Create Account";
+ }
+}
+
+async function logout(){
+ const {error}=await supabaseClient.auth.signOut();
+ if(error){
+  notify(error.message);
+  return;
+ }
+ currentUser=null;
+ showAuth();
+ document.getElementById("authEmail").value="";
+ document.getElementById("authPassword").value="";
+ authMode="login";
+ if(document.getElementById("authTitle").textContent!=="Welcome Back")switchAuth();
+ notify("You have logged out.");
+}
+
+async function initializeAuth(){
+ showAuth();
+ const {data,error}=await supabaseClient.auth.getSession();
+
+ if(error){
+  authMessage.textContent=error.message;
+  return;
+ }
+
+ if(data.session){
+  showApp(data.session.user);
+ }else{
+  showAuth();
+ }
+}
+
+supabaseClient.auth.onAuthStateChange((event,session)=>{
+ if(session){
+  showApp(session.user);
+ }else{
+  currentUser=null;
+  showAuth();
+ }
+});
+
+/* DASHBOARD MODULES */
+const moduleData=[
  ["Products & Inventory","▣","Manage products, stock and inventory."],
  ["Customers (CRM)","♙","Organize customer profiles and relationships."],
  ["Orders & Sales","🛍","Track orders and sales activity."],
@@ -502,9 +521,9 @@ const moduleData = [
  ["Help & Support","?","Get help using BIZORA."]
 ];
 
-const grid=document.getElementById("moduleGrid");
-
 function renderModules(list=moduleData){
+ const grid=document.getElementById("moduleGrid");
+ if(!grid)return;
  grid.innerHTML="";
  list.forEach(item=>{
   const card=document.createElement("div");
@@ -522,7 +541,9 @@ function goTo(name){
  document.querySelectorAll(".nav-item").forEach(btn=>{
   btn.classList.toggle("active",btn.dataset.page===name);
  });
+
  const page=document.getElementById("page");
+
  if(name==="Overview"){
   location.hash="";
   page.innerHTML=`
@@ -531,7 +552,7 @@ function goTo(name){
     <button class="primary-btn" onclick="goTo('AI Assistant')">✦ Open AI Assistant</button>
    </div>
    <section class="stats">
-    ${["Total Products","Total Customers","Total Orders","Revenue"].map((n,i)=>`
+    ${["Total Products","Total Customers","Total Orders","Revenue"].map(n=>`
     <div class="card"><div class="stat-name">${n}</div><div class="stat-value">—</div><div class="stat-note">Connect your business data</div></div>`).join("")}
    </section>
    <div class="card"><h3>Welcome back to BIZORA</h3><p style="color:var(--muted);font-size:12px">Your business workspace is ready for feature integrations.</p></div>
@@ -541,6 +562,7 @@ function goTo(name){
   const item=moduleData.find(x=>x[0]===name);
   const icon=item?item[1]:"✦";
   const description=item?item[2]:"Manage your business workspace.";
+
   page.innerHTML=`
    <div class="page-heading">
     <div><h1>${icon} ${name}</h1><p>${description}</p></div>
@@ -554,6 +576,7 @@ function goTo(name){
    </div>`;
   location.hash=encodeURIComponent(name);
  }
+
  if(window.innerWidth<=760)toggleMenu(false);
  window.scrollTo(0,0);
 }
@@ -575,6 +598,7 @@ function toggleMenu(force){
  sidebar.classList.toggle("open",open);
  overlay.classList.toggle("show",open);
 }
+
 function notify(message){
  const toast=document.getElementById("toast");
  toast.textContent=message;
@@ -582,13 +606,17 @@ function notify(message){
  clearTimeout(window.toastTimer);
  window.toastTimer=setTimeout(()=>toast.style.display="none",2800);
 }
+
 function searchTools(value){
  const q=value.toLowerCase().trim();
- if(!q){renderModules();return}
+ if(!q){renderModules();return;}
  renderModules(moduleData.filter(item=>
   item[0].toLowerCase().includes(q)||item[2].toLowerCase().includes(q)
  ));
 }
+
+/* START AUTH CHECK */
+initializeAuth();
 </script>
 </body>
 </html>
