@@ -2,620 +2,517 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0b1020">
 <title>BIZORA — Business Workspace</title>
-<meta name="description" content="BIZORA is your intelligent AI-powered business management workspace.">
+<meta name="description" content="BIZORA all-in-one business management workspace.">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <style>
 :root{
---bg:#0b1020;--panel:#111a2d;--panel2:#172239;
---text:#f4f6ff;--muted:#929db5;--border:rgba(255,255,255,.08);
---accent:#8068ff;--accent2:#a18cff;--green:#37c995;
---red:#ff7185;--shadow:0 15px 45px rgba(0,0,0,.15);
+--bg:#0b1020;--panel:#111a2d;--panel2:#172239;--text:#f4f6ff;
+--muted:#929db5;--border:#ffffff13;--accent:#8068ff;
+--green:#37c995;--red:#ff7185;--shadow:0 12px 35px #0002
 }
 body.light{
---bg:#f4f6fb;--panel:#fff;--panel2:#f0f2f9;
---text:#192239;--muted:#73809a;--border:rgba(25,34,57,.09);
---accent:#7057ed;--accent2:#8c78fa;--shadow:0 12px 35px rgba(30,40,80,.07);
+--bg:#f4f6fb;--panel:#fff;--panel2:#f0f2f9;--text:#192239;
+--muted:#73809a;--border:#19223916;--accent:#7057ed;
+--shadow:0 12px 35px #1922390c
 }
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Arial,sans-serif;transition:background .2s,color .2s}
-button,input{font:inherit}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,Arial,sans-serif}
+button,input,select,textarea{font:inherit}
 button{cursor:pointer}
 .app{display:flex;min-height:100vh}
-.sidebar{
-width:255px;flex-shrink:0;background:var(--panel);
-border-right:1px solid var(--border);padding:22px 15px;
-display:flex;flex-direction:column;height:100vh;
-position:sticky;top:0;overflow-y:auto;transition:transform .25s;
-}
-.brand{display:flex;align-items:center;gap:11px;padding:3px 10px 25px}
-.logo{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;color:white;font-size:21px;font-weight:900;background:linear-gradient(135deg,#967bff,#5741d5);box-shadow:0 7px 22px #7455ee44}
-.brand-name{font-size:21px;font-weight:850;letter-spacing:1px}
-.brand-sub{font-size:10px;color:var(--muted);margin-top:3px;letter-spacing:1.4px}
-.section-label{color:var(--muted);font-size:10px;font-weight:800;letter-spacing:1.4px;padding:14px 11px 7px}
-.nav-item{display:flex;align-items:center;gap:12px;width:100%;padding:11px 12px;border:0;border-radius:10px;background:transparent;color:var(--muted);text-align:left;font-size:13px;margin:2px 0;transition:.2s}
-.nav-item:hover{background:var(--panel2);color:var(--text)}
-.nav-item.active{background:linear-gradient(100deg,#8068ff2b,#8068ff0c);color:var(--accent2);font-weight:750}
-.nav-icon{width:20px;text-align:center;font-size:16px}
+.sidebar{width:255px;flex-shrink:0;background:var(--panel);border-right:1px solid var(--border);padding:20px 13px;position:fixed;inset:0 auto 0 0;overflow-y:auto;z-index:30;display:flex;flex-direction:column;transition:.25s}
+.brand{display:flex;align-items:center;gap:11px;padding:5px 9px 25px}
+.logo{width:42px;height:42px;border-radius:13px;background:linear-gradient(135deg,#967bff,#5741d5);display:grid;place-items:center;color:white;font-size:22px;font-weight:900}
+.brand-name{font-size:21px;font-weight:900;letter-spacing:1px}
+.brand-sub{font-size:9px;color:var(--muted);letter-spacing:1.4px;margin-top:4px}
+.section-label{font-size:10px;color:var(--muted);font-weight:800;letter-spacing:1.3px;padding:15px 10px 7px}
+.nav-item{display:flex;align-items:center;gap:11px;width:100%;padding:10px 11px;border:0;border-radius:9px;background:none;color:var(--muted);text-align:left;font-size:12px;margin:2px 0}
+.nav-item:hover,.nav-item.active{background:#8068ff20;color:var(--accent);font-weight:750}
+.nav-icon{width:20px;text-align:center;font-size:15px}
 .sidebar-bottom{margin-top:auto;padding-top:20px}
-.plan-card{background:linear-gradient(140deg,#6550d6,#372b80);border-radius:14px;padding:15px;color:white;margin:8px 2px 15px}
-.plan-card strong{font-size:13px}
-.plan-card p{font-size:11px;line-height:1.6;color:#e0dcff}
-.plan-card button{border:1px solid #ffffff66;background:#ffffff15;color:white;border-radius:8px;padding:8px 12px;font-size:11px}
-.profile{display:flex;align-items:center;gap:10px;border-top:1px solid var(--border);padding:16px 7px 0}
-.avatar{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:#6654d8;color:white;font-weight:800;font-size:13px;flex-shrink:0}
-.profile-info{min-width:0;flex:1}
-.profile-info strong{display:block;font-size:12px;overflow:hidden;text-overflow:ellipsis}
-.profile-info span{font-size:10px;color:var(--muted)}
-.main{flex:1;min-width:0}
-.topbar{height:72px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 30px;background:var(--panel);position:sticky;top:0;z-index:10}
-.top-left,.top-right{display:flex;align-items:center;gap:13px}
-.menu-btn{display:none;background:transparent;border:0;color:var(--text);font-size:22px}
-.search{display:flex;align-items:center;gap:9px;background:var(--panel2);border:1px solid var(--border);padding:9px 12px;border-radius:10px;width:260px}
-.search input{width:100%;border:0;outline:0;background:transparent;color:var(--text);font-size:12px}
-.search input::placeholder{color:var(--muted)}
-.icon-btn{width:37px;height:37px;border:1px solid var(--border);border-radius:10px;background:var(--panel2);color:var(--text);font-size:16px;position:relative}
-.dot{width:7px;height:7px;background:var(--red);border-radius:50%;position:absolute;right:7px;top:7px}
-.page{padding:28px 30px 50px;max-width:1600px;margin:auto}
-.page-heading{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:24px;flex-wrap:wrap}
-.page-heading h1{font-size:25px;margin:0 0 7px;font-weight:800}
-.page-heading p{font-size:12px;color:var(--muted);margin:0}
-.primary-btn{background:linear-gradient(120deg,#8068ff,#6047dc);color:white;border:0;border-radius:10px;padding:11px 16px;font-size:12px;font-weight:750;box-shadow:0 6px 18px #7057ed33}
-.secondary-btn{background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:12px}
-.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px;margin-bottom:20px}
-.card{background:var(--panel);border:1px solid var(--border);border-radius:15px;padding:18px;box-shadow:var(--shadow);min-width:0}
-.stat-top{display:flex;align-items:center;justify-content:space-between}
-.stat-name{font-size:11px;color:var(--muted);font-weight:600}
-.stat-icon{width:36px;height:36px;border-radius:11px;background:#8068ff20;display:grid;place-items:center;font-size:17px}
-.stat-value{font-size:26px;font-weight:850;margin:14px 0 7px}
+.profile{display:flex;align-items:center;gap:9px;padding:15px 5px 3px;border-top:1px solid var(--border)}
+.avatar{width:35px;height:35px;border-radius:50%;display:grid;place-items:center;background:#6654d8;color:white;font-weight:bold}
+.profile-info{flex:1;min-width:0}
+.profile-info strong,.profile-info span{display:block;overflow:hidden;text-overflow:ellipsis}
+.profile-info strong{font-size:11px}
+.profile-info span{font-size:9px;color:var(--muted)}
+.main{margin-left:255px;min-width:0;flex:1}
+.topbar{height:68px;position:sticky;top:0;z-index:20;background:var(--panel);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 25px}
+.top-left,.top-right{display:flex;align-items:center;gap:10px}
+.menu-btn{display:none;background:none;border:0;color:var(--text);font-size:23px}
+.search{width:260px;background:var(--panel2);border:1px solid var(--border);padding:9px 12px;border-radius:9px;display:flex;gap:8px}
+.search input{background:none;border:0;outline:0;color:var(--text);width:100%;font-size:12px}
+.icon-btn{width:36px;height:36px;border-radius:9px;background:var(--panel2);color:var(--text);border:1px solid var(--border)}
+.page{padding:27px;max-width:1600px;margin:auto}
+.heading{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap;margin-bottom:22px}
+.heading h1{font-size:24px;margin:0 0 7px}
+.heading p{font-size:12px;color:var(--muted);margin:0}
+.primary,.secondary,.danger{border:0;border-radius:9px;padding:10px 15px;font-size:12px;font-weight:700}
+.primary{background:linear-gradient(120deg,#8068ff,#6047dc);color:white}
+.secondary{background:var(--panel2);border:1px solid var(--border);color:var(--text)}
+.danger{background:#ff71851c;color:var(--red)}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin-bottom:17px}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:17px;box-shadow:var(--shadow);min-width:0}
+.stat-label{font-size:11px;color:var(--muted)}
+.stat-value{font-size:25px;font-weight:850;margin:12px 0 5px}
 .stat-note{font-size:10px;color:var(--muted)}
-.content-grid{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(250px,1fr);gap:16px;margin-bottom:18px}
-.card-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:18px}
-.card-heading h3{font-size:14px;margin:0}
-.card-heading span{font-size:10px;color:var(--muted)}
-.chart-area{height:210px;position:relative}
-.chart-area svg{width:100%;height:100%;overflow:visible}
-.quick-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
-.quick{background:var(--panel2);border:1px solid var(--border);border-radius:12px;padding:15px 10px;text-align:center;color:var(--text);transition:.2s}
-.quick:hover{border-color:var(--accent);transform:translateY(-2px)}
-.quick-icon{font-size:23px;margin-bottom:9px}
-.quick strong{display:block;font-size:11px}
-.quick small{display:block;color:var(--muted);font-size:9px;margin-top:5px}
-.activity{display:flex;flex-direction:column;gap:0}
-.activity-item{display:flex;align-items:center;gap:11px;padding:12px 0;border-bottom:1px solid var(--border)}
-.activity-item:last-child{border:0}
-.activity-icon{width:34px;height:34px;border-radius:10px;background:var(--panel2);display:grid;place-items:center}
-.activity-info{flex:1;min-width:0}
-.activity-info strong{font-size:11px;display:block}
-.activity-info span{font-size:10px;color:var(--muted)}
-.activity-time{font-size:9px;color:var(--muted)}
-.module-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}
-.module-card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:18px;cursor:pointer;transition:.2s}
-.module-card:hover{border-color:var(--accent);transform:translateY(-2px)}
-.module-card .module-icon{font-size:23px;margin-bottom:13px}
-.module-card h3{font-size:13px;margin:0 0 7px}
-.module-card p{font-size:11px;line-height:1.6;color:var(--muted);margin:0}
-.module-card .open-label{display:block;margin-top:15px;color:var(--accent2);font-size:10px;font-weight:700}
-.empty-page{text-align:center;padding:65px 20px;background:var(--panel);border:1px solid var(--border);border-radius:16px}
-.empty-page .big-icon{font-size:43px}
-.empty-page h2{font-size:20px}
-.empty-page p{font-size:12px;color:var(--muted);max-width:400px;margin:0 auto 18px;line-height:1.7}
-.toast{position:fixed;bottom:22px;right:22px;background:var(--panel2);color:var(--text);border:1px solid var(--border);padding:13px 18px;border-radius:11px;font-size:12px;box-shadow:var(--shadow);z-index:10001;display:none;max-width:90%}
-.overlay{display:none}
-
-/* AUTH */
-.auth-screen{position:fixed;inset:0;z-index:10000;background:#0b1020;display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto}
-.auth-box{width:100%;max-width:410px;background:#111a2d;color:#f4f6ff;padding:30px;border-radius:19px;border:1px solid #ffffff18;box-shadow:0 20px 60px #0005}
-.auth-logo{text-align:center;font-size:32px;font-weight:900;letter-spacing:2px;color:#a18cff}
-.auth-sub{text-align:center;color:#929db5;font-size:12px;margin:7px 0 25px}
-.auth-box h2{text-align:center;font-size:22px;margin:0 0 8px}
-.auth-description{text-align:center;color:#929db5;font-size:12px;margin:0 0 22px}
-.auth-input{width:100%;padding:14px;margin:7px 0;background:#172239;color:white;border:1px solid #ffffff22;border-radius:9px;outline:none;font-size:13px}
-.auth-input:focus{border-color:#8068ff}
-.auth-submit{width:100%;padding:14px;margin-top:12px;background:linear-gradient(120deg,#8068ff,#6047dc);color:white;border:0;border-radius:9px;font-weight:800}
-.auth-submit:disabled{opacity:.6;cursor:wait}
-.auth-switch{background:none;border:0;color:#a18cff;font-weight:bold}
-.auth-message{font-size:12px;text-align:center;line-height:1.6;margin-top:15px;color:#ff9aaa;overflow-wrap:anywhere}
-.auth-foot{text-align:center;color:#929db5;font-size:10px;margin-top:20px}
-@media(max-width:1100px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.module-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:760px){
-.sidebar{position:fixed;left:0;top:0;z-index:30;transform:translateX(-105%);height:100dvh}
-.sidebar.open{transform:translateX(0)}
-.overlay{position:fixed;inset:0;background:#0009;z-index:25}
+.grid2{display:grid;grid-template-columns:1.5fr 1fr;gap:15px;margin-bottom:17px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.card-title{font-size:14px;font-weight:750;margin:0 0 16px}
+.quick-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.quick{padding:15px 8px;background:var(--panel2);border:1px solid var(--border);border-radius:11px;color:var(--text);text-align:center}
+.quick span{font-size:23px;display:block;margin-bottom:7px}
+.quick strong{font-size:11px}
+.module-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.module-card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px;cursor:pointer}
+.module-card:hover{border-color:var(--accent)}
+.module-card .ico{font-size:23px;margin-bottom:12px}
+.module-card strong{font-size:12px;display:block;margin-bottom:7px}
+.module-card p{font-size:10px;line-height:1.6;color:var(--muted);margin:0}
+.module-card small{display:block;color:var(--accent);margin-top:13px;font-size:10px}
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:15px}
+.toolbar input{max-width:300px}
+.field{width:100%;background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:11px;color:var(--text);outline:none;font-size:12px}
+.field:focus{border-color:var(--accent)}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.form-group label{display:block;font-size:10px;color:var(--muted);margin-bottom:6px}
+.form-group.full{grid-column:1/-1}
+.table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:10px}
+table{border-collapse:collapse;width:100%;min-width:650px;font-size:11px}
+th,td{padding:13px 12px;text-align:left;border-bottom:1px solid var(--border)}
+th{background:var(--panel2);color:var(--muted);font-size:10px}
+td{color:var(--text)}
+tr:last-child td{border:0}
+.actions{display:flex;gap:6px}
+.small-btn{border:1px solid var(--border);background:var(--panel2);color:var(--text);padding:6px 8px;border-radius:6px;font-size:10px}
+.status{padding:5px 8px;border-radius:20px;background:#37c99520;color:var(--green);font-size:9px}
+.empty{text-align:center;padding:35px;color:var(--muted);font-size:12px}
+.modal{display:none;position:fixed;inset:0;background:#0009;z-index:100;align-items:center;justify-content:center;padding:15px}
+.modal.show{display:flex}
+.modal-box{background:var(--panel);width:100%;max-width:540px;max-height:90vh;overflow-y:auto;border:1px solid var(--border);border-radius:15px;padding:22px}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.modal-head h2{font-size:17px;margin:0}
+.toast{position:fixed;bottom:20px;right:20px;z-index:200;background:var(--panel2);border:1px solid var(--border);padding:13px 17px;border-radius:9px;display:none;font-size:12px;max-width:90%}
+.overlay{display:none;position:fixed;inset:0;background:#0009;z-index:25}
 .overlay.show{display:block}
+.auth-screen{position:fixed;inset:0;background:#0b1020;z-index:500;display:flex;align-items:center;justify-content:center;padding:20px}
+.auth-box{width:100%;max-width:410px;background:#111a2d;color:white;padding:28px;border-radius:17px}
+.auth-box h1{text-align:center;color:#a18cff;letter-spacing:2px}
+.auth-box h2{text-align:center}
+.auth-box p{text-align:center;color:#929db5;font-size:12px}
+.auth-input{width:100%;padding:13px;margin:6px 0;background:#172239;color:white;border:1px solid #ffffff22;border-radius:8px}
+.auth-submit{width:100%;padding:13px;margin-top:10px;background:#8068ff;color:white;border:0;border-radius:8px;font-weight:bold}
+.auth-message{color:#ff7185!important}
+a{color:var(--accent)}
+@media(max-width:1100px){.stats{grid-template-columns:repeat(2,1fr)}.module-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:760px){
+.sidebar{transform:translateX(-105%);width:260px}
+.sidebar.open{transform:translateX(0)}
+.main{margin-left:0}
 .menu-btn{display:block}
-.topbar{height:62px;padding:0 15px}
-.search{width:min(42vw,200px)}
-.page{padding:22px 15px 35px}
-.page-heading h1{font-size:22px}
-.content-grid{grid-template-columns:1fr}
-.quick-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.topbar{height:60px;padding:0 13px}
+.search{width:min(43vw,210px)}
+.page{padding:19px 13px}
+.grid2{grid-template-columns:1fr}
 .module-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.quick-grid{grid-template-columns:repeat(2,1fr)}
 }
-@media(max-width:420px){
-.stats{gap:9px}
-.card{padding:13px}
-.stat-value{font-size:22px}
+@media(max-width:430px){
 .module-grid{grid-template-columns:1fr}
-.search{width:125px}
-.top-right{gap:7px}
-.auth-box{padding:23px}
+.stats{gap:8px}
+.card{padding:12px}
+.stat-value{font-size:21px}
+.form-grid{grid-template-columns:1fr}
+.form-group.full{grid-column:auto}
 }
 </style>
 </head>
-
 <body>
 
-<!-- LOGIN / SIGN UP -->
 <div class="auth-screen" id="authScreen">
  <div class="auth-box">
-  <div class="auth-logo">BIZORA</div>
-  <div class="auth-sub">YOUR BUSINESS WORKSPACE</div>
+  <h1>BIZORA</h1>
+  <p>YOUR BUSINESS WORKSPACE</p>
   <h2 id="authTitle">Welcome Back</h2>
-  <p class="auth-description" id="authDescription">Login to your account</p>
-
-  <input class="auth-input" id="authName" type="text" placeholder="Your business / full name" autocomplete="name" style="display:none">
-  <input class="auth-input" id="authEmail" type="email" placeholder="Email address" autocomplete="email">
-  <input class="auth-input" id="authPassword" type="password" placeholder="Password (minimum 6 characters)" autocomplete="current-password">
-
+  <input class="auth-input" id="authName" placeholder="Your full name" style="display:none">
+  <input class="auth-input" id="authEmail" type="email" placeholder="Email address">
+  <input class="auth-input" id="authPassword" type="password" placeholder="Password">
   <button class="auth-submit" id="authSubmit" onclick="handleAuth()">Login</button>
-
-  <p style="text-align:center;font-size:12px;color:#929db5;margin-top:20px">
-   <span id="authSwitchText">Don't have an account?</span>
-   <button class="auth-switch" id="authSwitch" onclick="switchAuth()">Sign Up</button>
-  </p>
-  <p class="auth-message" id="authMessage" role="status"></p>
-  <div class="auth-foot">Secure account authentication by Supabase</div>
+  <p id="authMessage" class="auth-message"></p>
+  <p><span id="switchText">Don't have an account?</span>
+  <button onclick="switchAuth()" id="switchButton" style="background:none;border:0;color:#a18cff">Sign Up</button></p>
  </div>
 </div>
 
 <div class="app" id="app" style="visibility:hidden">
-
 <aside class="sidebar" id="sidebar">
  <div class="brand">
   <div class="logo">B</div>
   <div><div class="brand-name">BIZORA</div><div class="brand-sub">BUSINESS WORKSPACE</div></div>
  </div>
-
- <div class="section-label">WORKSPACE</div>
- <button class="nav-item active" data-page="Overview"><span class="nav-icon">▦</span>Overview</button>
- <button class="nav-item" data-page="AI Assistant"><span class="nav-icon">✦</span>AI Assistant</button>
-
- <div class="section-label">BUSINESS MANAGEMENT</div>
- <button class="nav-item" data-page="Products & Inventory"><span class="nav-icon">▣</span>Products & Inventory</button>
- <button class="nav-item" data-page="Customers (CRM)"><span class="nav-icon">♙</span>Customers (CRM)</button>
- <button class="nav-item" data-page="Orders & Sales"><span class="nav-icon">🛍</span>Orders & Sales</button>
- <button class="nav-item" data-page="Invoices & Payments"><span class="nav-icon">▤</span>Invoices & Payments</button>
- <button class="nav-item" data-page="Suppliers & Expenses"><span class="nav-icon">⇄</span>Suppliers & Expenses</button>
-
- <div class="section-label">AI BUSINESS TOOLS</div>
- <button class="nav-item" data-page="Customer Support"><span class="nav-icon">☏</span>Customer Support</button>
- <button class="nav-item" data-page="Product Descriptions"><span class="nav-icon">✎</span>Product Descriptions</button>
- <button class="nav-item" data-page="AI Marketing"><span class="nav-icon">✧</span>AI Marketing</button>
- <button class="nav-item" data-page="Business Advisor"><span class="nav-icon">◈</span>Business Advisor</button>
-
- <div class="section-label">MARKETING & GROWTH</div>
- <button class="nav-item" data-page="Social Media Manager"><span class="nav-icon">◎</span>Social Media Manager</button>
- <button class="nav-item" data-page="Advertisement Creator"><span class="nav-icon">◉</span>Advertisement Creator</button>
- <button class="nav-item" data-page="Content & Posts"><span class="nav-icon">▧</span>Content & Posts</button>
- <button class="nav-item" data-page="Hashtag Generator"><span class="nav-icon">#</span>Hashtag Generator</button>
- <button class="nav-item" data-page="Campaign Manager"><span class="nav-icon">◷</span>Campaign Manager</button>
-
- <div class="section-label">COMMUNICATION</div>
- <button class="nav-item" data-page="Customer Inbox"><span class="nav-icon">✉</span>Customer Inbox</button>
- <button class="nav-item" data-page="Live Chat"><span class="nav-icon">☷</span>Live Chat</button>
- <button class="nav-item" data-page="Email Management"><span class="nav-icon">＠</span>Email Management</button>
- <button class="nav-item" data-page="WhatsApp Integration"><span class="nav-icon">◉</span>WhatsApp Integration</button>
- <button class="nav-item" data-page="Customer Feedback"><span class="nav-icon">☆</span>Customer Feedback</button>
-
- <div class="section-label">REPORTS & ANALYTICS</div>
- <button class="nav-item" data-page="Business Analytics"><span class="nav-icon">▥</span>Business Analytics</button>
- <button class="nav-item" data-page="Sales Reports"><span class="nav-icon">▤</span>Sales Reports</button>
- <button class="nav-item" data-page="Customer Reports"><span class="nav-icon">♧</span>Customer Reports</button>
- <button class="nav-item" data-page="Financial Reports"><span class="nav-icon">＄</span>Financial Reports</button>
- <button class="nav-item" data-page="Performance Tracking"><span class="nav-icon">↗</span>Performance Tracking</button>
-
- <div class="section-label">SYSTEM</div>
- <button class="nav-item" data-page="Workflow Automation"><span class="nav-icon">⚙</span>Workflow Automation</button>
- <button class="nav-item" data-page="Scheduled Tasks"><span class="nav-icon">◷</span>Scheduled Tasks</button>
- <button class="nav-item" data-page="Team Management"><span class="nav-icon">♧</span>Team Management</button>
- <button class="nav-item" data-page="Roles & Permissions"><span class="nav-icon">♜</span>Roles & Permissions</button>
- <button class="nav-item" data-page="App Integrations"><span class="nav-icon">⌘</span>App Integrations</button>
- <button class="nav-item" data-page="Subscription & Billing"><span class="nav-icon">＄</span>Subscription & Billing</button>
- <button class="nav-item" data-page="Security & Settings"><span class="nav-icon">⚙</span>Security & Settings</button>
- <button class="nav-item" data-page="Help & Support"><span class="nav-icon">?</span>Help & Support</button>
-
+ <div id="navigation"></div>
  <div class="sidebar-bottom">
-  <div class="plan-card">
-   <strong>✦ BIZORA Workspace</strong>
-   <p>Your business tools in one place. More powerful features are coming soon.</p>
-   <button onclick="notify('Plan upgrades will be available later.')">Explore plans</button>
-  </div>
   <div class="profile">
-   <div class="avatar" id="profileAvatar">B</div>
-   <div class="profile-info">
-    <strong id="profileName">Business Owner</strong>
-    <span id="profileEmail">Workspace account</span>
-   </div>
-   <button class="icon-btn" onclick="logout()" title="Logout">↪</button>
+   <div class="avatar" id="avatar">B</div>
+   <div class="profile-info"><strong id="profileName">Business Owner</strong><span id="profileEmail"></span></div>
+   <button class="icon-btn" onclick="logout()">↪</button>
   </div>
  </div>
 </aside>
-
 <div class="overlay" id="overlay" onclick="toggleMenu(false)"></div>
 
 <main class="main">
- <header class="topbar">
-  <div class="top-left">
-   <button class="menu-btn" onclick="toggleMenu()">☰</button>
-   <div class="search"><span>⌕</span><input id="searchInput" placeholder="Search tools..." oninput="searchTools(this.value)"></div>
-  </div>
-  <div class="top-right">
-   <button class="icon-btn" onclick="toggleTheme()" title="Change theme">◐</button>
-   <button class="icon-btn" onclick="notify('You have no new notifications.')">♧<span class="dot"></span></button>
-   <div class="avatar" id="topAvatar">B</div>
-  </div>
- </header>
-
- <div class="page" id="page">
-  <div class="page-heading">
-   <div><h1>Business Overview</h1><p>Welcome to BIZORA. Manage your business from one workspace.</p></div>
-   <button class="primary-btn" onclick="goTo('AI Assistant')">✦ Open AI Assistant</button>
-  </div>
-
-  <section class="stats">
-   <div class="card"><div class="stat-top"><span class="stat-name">Total Products</span><span class="stat-icon">▣</span></div><div class="stat-value">—</div><div class="stat-note">Connect your product database</div></div>
-   <div class="card"><div class="stat-top"><span class="stat-name">Total Customers</span><span class="stat-icon">♙</span></div><div class="stat-value">—</div><div class="stat-note">Customer records will appear here</div></div>
-   <div class="card"><div class="stat-top"><span class="stat-name">Total Orders</span><span class="stat-icon">🛍</span></div><div class="stat-value">—</div><div class="stat-note">Connect order management</div></div>
-   <div class="card"><div class="stat-top"><span class="stat-name">Revenue</span><span class="stat-icon">＄</span></div><div class="stat-value">—</div><div class="stat-note">Sales analytics coming soon</div></div>
-  </section>
-
-  <section class="content-grid">
-   <div class="card">
-    <div class="card-heading"><h3>Business Performance</h3><span>Analytics preview</span></div>
-    <div class="chart-area">
-     <svg viewBox="0 0 600 210" preserveAspectRatio="none">
-      <defs><linearGradient id="area" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#8068ff" stop-opacity=".28"/><stop offset="100%" stop-color="#8068ff" stop-opacity="0"/></linearGradient></defs>
-      <g stroke="currentColor" opacity=".10" stroke-dasharray="4 5"><path d="M0 30H600 M0 75H600 M0 120H600 M0 165H600"/></g>
-      <path d="M0 165 L70 143 L140 153 L210 105 L280 120 L350 78 L420 100 L490 48 L560 65 L600 25 L600 190 L0 190 Z" fill="url(#area)"/>
-      <path d="M0 165 L70 143 L140 153 L210 105 L280 120 L350 78 L420 100 L490 48 L560 65 L600 25" fill="none" stroke="#927aff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-      <g fill="#927aff"><circle cx="70" cy="143" r="4"/><circle cx="210" cy="105" r="4"/><circle cx="350" cy="78" r="4"/><circle cx="490" cy="48" r="4"/></g>
-     </svg>
-    </div>
-    <div class="card-heading"><span>Chart is a design preview, not live business data.</span></div>
-   </div>
-   <div class="card">
-    <div class="card-heading"><h3>Recent Activity</h3><span>Activity feed</span></div>
-    <div class="activity">
-     <div class="activity-item"><div class="activity-icon">✦</div><div class="activity-info"><strong>AI Assistant</strong><span>Ready to help your business</span></div><span class="activity-time">Ready</span></div>
-     <div class="activity-item"><div class="activity-icon">▣</div><div class="activity-info"><strong>Products</strong><span>Database connection pending</span></div><span class="activity-time">Setup</span></div>
-     <div class="activity-item"><div class="activity-icon">♙</div><div class="activity-info"><strong>Customers</strong><span>CRM setup pending</span></div><span class="activity-time">Setup</span></div>
-     <div class="activity-item"><div class="activity-icon">↗</div><div class="activity-info"><strong>Analytics</strong><span>Waiting for business data</span></div><span class="activity-time">Setup</span></div>
-    </div>
-   </div>
-  </section>
-
-  <section class="card" style="margin-bottom:18px">
-   <div class="card-heading"><h3>Quick Actions</h3><span>Shortcuts</span></div>
-   <div class="quick-grid">
-    <button class="quick" onclick="goTo('Products & Inventory')"><div class="quick-icon">▣</div><strong>Add Product</strong><small>Manage inventory</small></button>
-    <button class="quick" onclick="goTo('Customers (CRM)')"><div class="quick-icon">♙</div><strong>Add Customer</strong><small>Customer records</small></button>
-    <button class="quick" onclick="goTo('AI Marketing')"><div class="quick-icon">✧</div><strong>Create Marketing</strong><small>AI marketing tools</small></button>
-    <button class="quick" onclick="goTo('Customer Support')"><div class="quick-icon">☏</div><strong>Customer Support</strong><small>Help customers</small></button>
-   </div>
-  </section>
-
-  <section>
-   <div class="card-heading"><h3>Business Modules</h3><span>Explore workspace</span></div>
-   <div class="module-grid" id="moduleGrid"></div>
-  </section>
+<header class="topbar">
+ <div class="top-left">
+  <button class="menu-btn" onclick="toggleMenu()">☰</button>
+  <div class="search">⌕ <input id="globalSearch" placeholder="Search modules..." oninput="globalFilter(this.value)"></div>
  </div>
+ <div class="top-right">
+  <button class="icon-btn" onclick="toggleTheme()">◐</button>
+  <button class="icon-btn" onclick="notify('No new notifications.')">♧</button>
+  <div class="avatar" id="topAvatar">B</div>
+ </div>
+</header>
+<div class="page" id="page"></div>
 </main>
 </div>
 
+<div class="modal" id="modal">
+ <div class="modal-box">
+  <div class="modal-head"><h2 id="modalTitle">Add Record</h2><button class="icon-btn" onclick="closeModal()">✕</button></div>
+  <form id="recordForm" onsubmit="saveRecord(event)">
+   <div class="form-grid" id="formFields"></div>
+   <div style="display:flex;justify-content:flex-end;gap:9px;margin-top:20px">
+    <button type="button" class="secondary" onclick="closeModal()">Cancel</button>
+    <button class="primary" type="submit">Save Record</button>
+   </div>
+  </form>
+ </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script>
-/* SUPABASE CONNECTION */
-const SUPABASE_URL = "https://uidalntoqcwsxxcplctl.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_O4cxJaXrIMWfP2S63HQd8w_KD9yHwCF";
+/* SUPABASE AUTH */
+const SUPABASE_URL="https://uidalntoqcwsxxcplctl.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY="sb_publishable_O4cxJaXrIMWfP2S63HQd8w_KD9yHwCF";
+const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
 
-const supabaseClient = window.supabase.createClient(
- SUPABASE_URL,
- SUPABASE_PUBLISHABLE_KEY
-);
-
-let authMode = "login";
-let currentUser = null;
-
-const authScreen = document.getElementById("authScreen");
-const app = document.getElementById("app");
-const authMessage = document.getElementById("authMessage");
-
-function showAuth(){
- authScreen.style.display="flex";
- app.style.visibility="hidden";
-}
-
-function showApp(user){
- currentUser=user;
- authScreen.style.display="none";
- app.style.visibility="visible";
-
- const email=user.email || "Business Owner";
- const displayName=user.user_metadata?.full_name || email.split("@")[0];
- const initial=(displayName.trim()[0] || "B").toUpperCase();
-
- document.getElementById("profileName").textContent=displayName;
- document.getElementById("profileEmail").textContent=email;
- document.getElementById("profileAvatar").textContent=initial;
- document.getElementById("topAvatar").textContent=initial;
-}
+let authMode="login",currentUser=null;
+const $=id=>document.getElementById(id);
 
 function switchAuth(){
  authMode=authMode==="login"?"signup":"login";
-
- document.getElementById("authTitle").textContent=
-  authMode==="login"?"Welcome Back":"Create Account";
-
- document.getElementById("authDescription").textContent=
-  authMode==="login"?"Login to your account":"Create your BIZORA account";
-
- document.getElementById("authSubmit").textContent=
-  authMode==="login"?"Login":"Create Account";
-
- document.getElementById("authSwitchText").textContent=
-  authMode==="login"?"Don't have an account?":"Already have an account?";
-
- document.getElementById("authSwitch").textContent=
-  authMode==="login"?"Sign Up":"Login";
-
- document.getElementById("authName").style.display=
-  authMode==="signup"?"block":"none";
-
- document.getElementById("authPassword").autocomplete=
-  authMode==="login"?"current-password":"new-password";
-
- authMessage.textContent="";
- authMessage.style.color="#ff9aaa";
+ $("authTitle").textContent=authMode==="login"?"Welcome Back":"Create Account";
+ $("authSubmit").textContent=authMode==="login"?"Login":"Create Account";
+ $("switchText").textContent=authMode==="login"?"Don't have an account?":"Already have an account?";
+ $("switchButton").textContent=authMode==="login"?"Sign Up":"Login";
+ $("authName").style.display=authMode==="signup"?"block":"none";
+ $("authMessage").textContent="";
 }
-
 async function handleAuth(){
- const email=document.getElementById("authEmail").value.trim();
- const password=document.getElementById("authPassword").value;
- const fullName=document.getElementById("authName").value.trim();
- const button=document.getElementById("authSubmit");
-
- if(!email || !password){
-  authMessage.textContent="Please enter your email and password.";
-  return;
- }
-
- if(password.length<6){
-  authMessage.textContent="Password must be at least 6 characters.";
-  return;
- }
-
- if(authMode==="signup" && !fullName){
-  authMessage.textContent="Please enter your name.";
-  return;
- }
-
- button.disabled=true;
- button.textContent="Please wait...";
- authMessage.textContent="";
-
+ const email=$("authEmail").value.trim(),password=$("authPassword").value;
+ const name=$("authName").value.trim(),btn=$("authSubmit");
+ if(!email||!password)return $("authMessage").textContent="Enter your email and password.";
+ if(password.length<6)return $("authMessage").textContent="Password must be at least 6 characters.";
+ if(authMode==="signup"&&!name)return $("authMessage").textContent="Enter your name.";
+ btn.disabled=true;btn.textContent="Please wait...";
  try{
+  let result;
   if(authMode==="signup"){
-   const {data,error}=await supabaseClient.auth.signUp({
-    email:email,
-    password:password,
-    options:{data:{full_name:fullName}}
-   });
-
-   if(error) throw error;
-
-   if(data.session){
-    authMessage.style.color="#37c995";
-    authMessage.textContent="Account created successfully!";
-    showApp(data.session.user);
-   }else{
-    authMessage.style.color="#37c995";
-    authMessage.textContent="Account created. Please check your email and confirm your account before logging in.";
-   }
+   result=await supabaseClient.auth.signUp({email,password,options:{data:{full_name:name}}});
+   if(result.error)throw result.error;
+   if(result.data.session)showApp(result.data.user);
+   else $("authMessage").textContent="Account created. Check your email to confirm it.";
   }else{
-   const {data,error}=await supabaseClient.auth.signInWithPassword({
-    email:email,
-    password:password
-   });
-
-   if(error) throw error;
-   showApp(data.user);
+   result=await supabaseClient.auth.signInWithPassword({email,password});
+   if(result.error)throw result.error;
+   showApp(result.data.user);
   }
- }catch(error){
-  authMessage.style.color="#ff7185";
-  authMessage.textContent=error.message || "Something went wrong. Please try again.";
- }finally{
-  button.disabled=false;
-  button.textContent=authMode==="login"?"Login":"Create Account";
- }
+ }catch(e){$("authMessage").textContent=e.message}
+ finally{btn.disabled=false;btn.textContent=authMode==="login"?"Login":"Create Account"}
 }
-
 async function logout(){
  const {error}=await supabaseClient.auth.signOut();
- if(error){
-  notify(error.message);
-  return;
- }
- currentUser=null;
- showAuth();
- document.getElementById("authEmail").value="";
- document.getElementById("authPassword").value="";
- authMode="login";
- if(document.getElementById("authTitle").textContent!=="Welcome Back")switchAuth();
- notify("You have logged out.");
+ if(error)return notify(error.message);
+ currentUser=null;$("app").style.visibility="hidden";$("authScreen").style.display="flex";
 }
-
+function showApp(user){
+ currentUser=user;
+ $("authScreen").style.display="none";$("app").style.visibility="visible";
+ const name=user.user_metadata?.full_name||user.email.split("@")[0];
+ $("profileName").textContent=name;$("profileEmail").textContent=user.email;
+ $("avatar").textContent=name[0].toUpperCase();$("topAvatar").textContent=name[0].toUpperCase();
+ renderNavigation();goTo("Overview");
+}
 async function initializeAuth(){
- showAuth();
  const {data,error}=await supabaseClient.auth.getSession();
-
- if(error){
-  authMessage.textContent=error.message;
-  return;
- }
-
- if(data.session){
-  showApp(data.session.user);
- }else{
-  showAuth();
- }
+ if(error){$("authMessage").textContent=error.message;return}
+ if(data.session)showApp(data.session.user);
 }
-
 supabaseClient.auth.onAuthStateChange((event,session)=>{
- if(session){
-  showApp(session.user);
- }else{
-  currentUser=null;
-  showAuth();
- }
+ if(session)showApp(session.user);
 });
 
-/* DASHBOARD MODULES */
-const moduleData=[
- ["Products & Inventory","▣","Manage products, stock and inventory."],
- ["Customers (CRM)","♙","Organize customer profiles and relationships."],
- ["Orders & Sales","🛍","Track orders and sales activity."],
- ["Invoices & Payments","▤","Manage invoices and payment records."],
- ["Suppliers & Expenses","⇄","Organize suppliers and business expenses."],
- ["AI Assistant","✦","Get AI help with everyday business tasks."],
- ["Customer Support","☏","Prepare and manage customer support."],
- ["Product Descriptions","✎","Create clear and engaging product descriptions."],
- ["AI Marketing","✧","Plan your business marketing with AI."],
- ["Business Advisor","◈","Get business guidance and ideas."],
- ["Social Media Manager","◎","Organize social media content."],
- ["Advertisement Creator","◉","Create advertising concepts and copy."],
- ["Content & Posts","▧","Plan posts and business content."],
- ["Hashtag Generator","#","Generate relevant social hashtags."],
- ["Campaign Manager","◷","Organize marketing campaigns."],
- ["Customer Inbox","✉","Manage customer messages in one place."],
- ["Live Chat","☷","Customer live chat workspace."],
- ["Email Management","＠","Organize business email workflows."],
- ["WhatsApp Integration","◉","Plan WhatsApp business connectivity."],
- ["Customer Feedback","☆","Collect and review customer feedback."],
- ["Business Analytics","▥","View business performance analytics."],
- ["Sales Reports","▤","Review sales reporting."],
- ["Customer Reports","♧","Understand customer activity."],
- ["Financial Reports","＄","Organize financial reporting."],
- ["Performance Tracking","↗","Track important business indicators."],
- ["Workflow Automation","⚙","Automate repeatable workflows."],
- ["Scheduled Tasks","◷","Plan and organize scheduled work."],
- ["Team Management","♧","Manage your business team."],
- ["Roles & Permissions","♜","Control workspace access."],
- ["App Integrations","⌘","Connect external business tools."],
- ["Subscription & Billing","＄","Manage workspace plans and billing."],
- ["Security & Settings","⚙","Manage account and security settings."],
- ["Help & Support","?","Get help using BIZORA."]
+/* COMPLETE MODULE STRUCTURE */
+const groups=[
+["WORKSPACE",[
+["Overview","▦"],["AI Assistant","✦"]
+]],
+["BUSINESS MANAGEMENT",[
+["Products & Inventory","▣"],["Customers (CRM)","♙"],["Orders & Sales","🛍"],
+["Invoices & Payments","▤"],["Suppliers & Expenses","⇄"]
+]],
+["AI BUSINESS TOOLS",[
+["Customer Support","☏"],["Product Descriptions","✎"],["AI Marketing","✧"],["Business Advisor","◈"]
+]],
+["MARKETING & GROWTH",[
+["Social Media Manager","◎"],["Advertisement Creator","◉"],["Content & Posts","▧"],
+["Hashtag Generator","#"],["Campaign Manager","◷"]
+]],
+["COMMUNICATION",[
+["Customer Inbox","✉"],["Live Chat","☷"],["Email Management","@"],
+["WhatsApp Integration","◉"],["Customer Feedback","☆"]
+]],
+["REPORTS & ANALYTICS",[
+["Business Analytics","▥"],["Sales Reports","▤"],["Customer Reports","♧"],
+["Financial Reports","＄"],["Performance Tracking","↗"]
+]],
+["SYSTEM",[
+["Workflow Automation","⚙"],["Scheduled Tasks","◷"],["Team Management","♧"],
+["Roles & Permissions","♜"],["App Integrations","⌘"],
+["Subscription & Billing","＄"],["Security & Settings","⚙"],["Help & Support","?"]
+]]
 ];
 
-function renderModules(list=moduleData){
- const grid=document.getElementById("moduleGrid");
- if(!grid)return;
- grid.innerHTML="";
- list.forEach(item=>{
-  const card=document.createElement("div");
-  card.className="module-card";
-  card.innerHTML=`<div class="module-icon">${item[1]}</div>
-   <h3>${item[0]}</h3><p>${item[2]}</p>
-   <span class="open-label">Open module →</span>`;
-  card.onclick=()=>goTo(item[0]);
-  grid.appendChild(card);
- });
+const descriptions={
+"Overview":"Your business performance and workspace overview.",
+"AI Assistant":"Your future AI-powered business assistant.",
+"Products & Inventory":"Manage products, prices, stock, categories and low-stock items.",
+"Customers (CRM)":"Manage customer profiles, contact details and customer history.",
+"Orders & Sales":"Create orders, record sales and monitor order status.",
+"Invoices & Payments":"Create invoices and track payments and outstanding balances.",
+"Suppliers & Expenses":"Manage suppliers, purchase records and operating expenses.",
+"Customer Support":"Organize customer questions, support cases and resolutions.",
+"Product Descriptions":"Prepare and organize product descriptions.",
+"AI Marketing":"Plan marketing strategies and promotional content.",
+"Business Advisor":"Organize business goals, plans and decisions.",
+"Social Media Manager":"Manage social media platforms and content schedules.",
+"Advertisement Creator":"Organize advertisements and creative briefs.",
+"Content & Posts":"Manage drafts, posts and publishing status.",
+"Hashtag Generator":"Save and organize hashtags for marketing.",
+"Campaign Manager":"Manage campaigns, budgets and campaign status.",
+"Customer Inbox":"Central workspace for incoming customer messages.",
+"Live Chat":"Manage customer chat sessions.",
+"Email Management":"Organize business email tasks and templates.",
+"WhatsApp Integration":"Manage WhatsApp integration settings and workflows.",
+"Customer Feedback":"Collect feedback, ratings and customer suggestions.",
+"Business Analytics":"Analyze business performance and key indicators.",
+"Sales Reports":"Review sales totals and sales records.",
+"Customer Reports":"Review customer activity and customer records.",
+"Financial Reports":"Review revenue, costs, expenses and profit.",
+"Performance Tracking":"Track business targets and performance indicators.",
+"Workflow Automation":"Organize business automation rules.",
+"Scheduled Tasks":"Manage recurring and scheduled tasks.",
+"Team Management":"Manage employees and team information.",
+"Roles & Permissions":"Organize team roles and access permissions.",
+"App Integrations":"Manage external app integration settings.",
+"Subscription & Billing":"Manage plan and billing information.",
+"Security & Settings":"Manage workspace preferences and security.",
+"Help & Support":"Find help and organize support requests."
+};
+
+/* MODULE FIELDS */
+const fields={
+"Products & Inventory":[["Product Name","text"],["SKU / Product Code","text"],["Category","text"],["Selling Price","number"],["Purchase Cost","number"],["Stock Quantity","number"],["Low Stock Alert","number"],["Supplier","text"],["Description","textarea"]],
+"Customers (CRM)":[["Customer Name","text"],["Email","email"],["Phone","tel"],["Company","text"],["Address","text"],["Customer Type","select:New,Regular,VIP"],["Notes","textarea"]],
+"Orders & Sales":[["Order Number","text"],["Customer","text"],["Order Date","date"],["Product / Items","text"],["Quantity","number"],["Total Amount","number"],["Payment Status","select:Pending,Paid,Partial,Refunded"],["Order Status","select:New,Processing,Shipped,Completed,Cancelled"]],
+"Invoices & Payments":[["Invoice Number","text"],["Customer","text"],["Issue Date","date"],["Due Date","date"],["Amount","number"],["Payment Method","select:Cash,Bank Transfer,Card,Online"],["Status","select:Draft,Sent,Paid,Overdue"]],
+"Suppliers & Expenses":[["Name / Supplier","text"],["Type","select:Supplier,Expense"],["Category","text"],["Contact","text"],["Date","date"],["Amount","number"],["Payment Status","select:Pending,Paid"],["Notes","textarea"]],
+"Customer Support":[["Customer","text"],["Subject","text"],["Category","text"],["Priority","select:Low,Medium,High,Urgent"],["Status","select:Open,In Progress,Resolved,Closed"],["Description","textarea"]],
+"Product Descriptions":[["Product Name","text"],["Product Features","textarea"],["Target Audience","text"],["Description","textarea"],["Status","select:Draft,Ready,Published"]],
+"AI Marketing":[["Campaign Name","text"],["Marketing Goal","text"],["Target Audience","text"],["Platform","text"],["Content / Strategy","textarea"],["Status","select:Idea,Draft,Ready,Active"]],
+"Business Advisor":[["Topic","text"],["Business Goal","text"],["Challenge","textarea"],["Notes / Plan","textarea"],["Status","select:Planning,In Progress,Completed"]],
+"Social Media Manager":[["Platform","select:Facebook,Instagram,TikTok,LinkedIn,YouTube,X"],["Account Name","text"],["Post Content","textarea"],["Schedule Date","date"],["Status","select:Draft,Scheduled,Published"]],
+"Advertisement Creator":[["Ad Name","text"],["Platform","text"],["Target Audience","text"],["Headline","text"],["Ad Copy","textarea"],["Budget","number"],["Status","select:Draft,Ready,Active"]],
+"Content & Posts":[["Post Title","text"],["Platform","text"],["Content","textarea"],["Publish Date","date"],["Status","select:Draft,Approved,Scheduled,Published"]],
+"Hashtag Generator":[["Topic","text"],["Platform","text"],["Hashtags","textarea"],["Category","text"]],
+"Campaign Manager":[["Campaign Name","text"],["Platform","text"],["Start Date","date"],["End Date","date"],["Budget","number"],["Goal","text"],["Status","select:Planning,Active,Paused,Completed"]],
+"Customer Inbox":[["Customer","text"],["Contact","text"],["Subject","text"],["Message","textarea"],["Channel","select:Email,WhatsApp,Website,Social Media"],["Status","select:New,Open,Replied,Closed"]],
+"Live Chat":[["Customer","text"],["Session ID","text"],["Agent","text"],["Chat Notes","textarea"],["Status","select:Waiting,Active,Completed"]],
+"Email Management":[["Email Subject","text"],["Recipient","email"],["Template","text"],["Message","textarea"],["Status","select:Draft,Ready,Sent"]],
+"WhatsApp Integration":[["Integration Name","text"],["Phone Number","tel"],["Provider","text"],["Connection Notes","textarea"],["Status","select:Not Connected,Setup Pending,Connected"]],
+"Customer Feedback":[["Customer","text"],["Rating","number"],["Feedback","textarea"],["Date","date"],["Status","select:New,Reviewed,Resolved"]],
+"Business Analytics":[["Metric Name","text"],["Period","text"],["Value","number"],["Target","number"],["Notes","textarea"]],
+"Sales Reports":[["Report Name","text"],["Period","text"],["Total Sales","number"],["Orders","number"],["Notes","textarea"]],
+"Customer Reports":[["Report Name","text"],["Period","text"],["Total Customers","number"],["New Customers","number"],["Notes","textarea"]],
+"Financial Reports":[["Report Name","text"],["Period","text"],["Revenue","number"],["Costs","number"],["Expenses","number"],["Notes","textarea"]],
+"Performance Tracking":[["KPI Name","text"],["Target","number"],["Actual","number"],["Period","text"],["Status","select:On Track,Behind,Completed"]],
+"Workflow Automation":[["Workflow Name","text"],["Trigger","text"],["Action","text"],["Description","textarea"],["Status","select:Draft,Active,Paused"]],
+"Scheduled Tasks":[["Task Name","text"],["Assigned To","text"],["Date","date"],["Time","time"],["Description","textarea"],["Status","select:Pending,In Progress,Completed"]],
+"Team Management":[["Employee Name","text"],["Email","email"],["Phone","tel"],["Department","text"],["Job Title","text"],["Joining Date","date"],["Status","select:Active,Inactive"]],
+"Roles & Permissions":[["Role Name","text"],["Description","textarea"],["Access Level","select:Admin,Manager,Staff,Viewer"],["Permissions","textarea"]],
+"App Integrations":[["App Name","text"],["Category","text"],["Account","text"],["Description","textarea"],["Status","select:Not Connected,Setup Pending,Connected"]],
+"Subscription & Billing":[["Plan Name","text"],["Billing Period","select:Monthly,Yearly"],["Amount","number"],["Next Billing Date","date"],["Status","select:Free,Active,Pending,Cancelled"]],
+"Security & Settings":[["Setting Name","text"],["Category","text"],["Value","text"],["Description","textarea"]],
+"Help & Support":[["Subject","text"],["Category","text"],["Priority","select:Low,Medium,High"],["Description","textarea"],["Status","select:Open,In Progress,Resolved"]]
+};
+
+/* LOCAL RECORD STORAGE */
+let records={};
+let currentModule="Overview";
+let editingId=null;
+
+function loadRecords(){
+ try{records=JSON.parse(localStorage.getItem("bizora_records")||"{}")}
+ catch(e){records={}}
 }
-renderModules();
-
+function saveRecordsToStorage(){
+ localStorage.setItem("bizora_records",JSON.stringify(records));
+}
+function getRecords(name){return records[name]||[]}
+function moduleList(){return groups.flatMap(g=>g[1].map(x=>x[0]))}
+function renderNavigation(){
+ $("navigation").innerHTML=groups.map(group=>`
+ <div class="section-label">${group[0]}</div>
+ ${group[1].map(m=>`<button class="nav-item" data-page="${m[0]}" onclick="goTo('${m[0].replace(/'/g,"\\'")}')"><span class="nav-icon">${m[1]}</span>${m[0]}</button>`).join("")}
+ `).join("");
+}
 function goTo(name){
- document.querySelectorAll(".nav-item").forEach(btn=>{
-  btn.classList.toggle("active",btn.dataset.page===name);
- });
-
- const page=document.getElementById("page");
-
- if(name==="Overview"){
-  location.hash="";
-  page.innerHTML=`
-   <div class="page-heading">
-    <div><h1>Business Overview</h1><p>Welcome to BIZORA. Manage your business from one workspace.</p></div>
-    <button class="primary-btn" onclick="goTo('AI Assistant')">✦ Open AI Assistant</button>
-   </div>
-   <section class="stats">
-    ${["Total Products","Total Customers","Total Orders","Revenue"].map(n=>`
-    <div class="card"><div class="stat-name">${n}</div><div class="stat-value">—</div><div class="stat-note">Connect your business data</div></div>`).join("")}
-   </section>
-   <div class="card"><h3>Welcome back to BIZORA</h3><p style="color:var(--muted);font-size:12px">Your business workspace is ready for feature integrations.</p></div>
-   <div style="margin-top:18px"><div class="card-heading"><h3>Business Modules</h3></div><div class="module-grid" id="moduleGrid"></div></div>`;
-  renderModules();
- }else{
-  const item=moduleData.find(x=>x[0]===name);
-  const icon=item?item[1]:"✦";
-  const description=item?item[2]:"Manage your business workspace.";
-
-  page.innerHTML=`
-   <div class="page-heading">
-    <div><h1>${icon} ${name}</h1><p>${description}</p></div>
-    <button class="secondary-btn" onclick="goTo('Overview')">← Back to Overview</button>
-   </div>
-   <div class="empty-page">
-    <div class="big-icon">${icon}</div>
-    <h2>${name}</h2>
-    <p>This module is included in the BIZORA dashboard structure. Its database and working features will be connected in upcoming development steps.</p>
-    <button class="primary-btn" onclick="notify('This module is planned for the next development stage.')">Module setup pending</button>
-   </div>`;
-  location.hash=encodeURIComponent(name);
- }
-
- if(window.innerWidth<=760)toggleMenu(false);
+ currentModule=name;
+ document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active",b.dataset.page===name));
+ if(name==="Overview")renderDashboard();else renderModule(name);
+ $("sidebar").classList.remove("open");$("overlay").classList.remove("show");
  window.scrollTo(0,0);
 }
-
-document.querySelectorAll(".nav-item").forEach(btn=>{
- btn.addEventListener("click",()=>goTo(btn.dataset.page));
-});
-
+function globalFilter(value){
+ const q=value.toLowerCase();
+ if(!q){goTo("Overview");return}
+ const found=moduleList().filter(n=>n.toLowerCase().includes(q));
+ $("page").innerHTML=`<div class="heading"><div><h1>Search Results</h1><p>Matching BIZORA modules</p></div></div><div class="module-grid">${found.map(n=>moduleCard(n)).join("")}</div>`;
+}
+function moduleCard(name){
+ const group=groups.flatMap(g=>g[1]).find(x=>x[0]===name);
+ return `<div class="module-card" onclick="goTo('${name.replace(/'/g,"\\'")}')"><div class="ico">${group[1]}</div><strong>${name}</strong><p>${descriptions[name]}</p><small>Open module →</small></div>`;
+}
+function renderDashboard(){
+ const products=getRecords("Products & Inventory");
+ const customers=getRecords("Customers (CRM)");
+ const orders=getRecords("Orders & Sales");
+ const revenue=orders.reduce((s,r)=>s+Number(r["Total Amount"]||0),0);
+ const currency=n=>new Intl.NumberFormat("en-PK",{maximumFractionDigits:2}).format(n);
+ $("page").innerHTML=`
+ <div class="heading"><div><h1>Business Overview</h1><p>Welcome to BIZORA. Your business workspace.</p></div><button class="primary" onclick="goTo('Products & Inventory')">＋ Add Product</button></div>
+ <div class="stats">
+ <div class="card"><div class="stat-label">Total Products</div><div class="stat-value">${products.length}</div><div class="stat-note">Saved product records</div></div>
+ <div class="card"><div class="stat-label">Total Customers</div><div class="stat-value">${customers.length}</div><div class="stat-note">Saved customer records</div></div>
+ <div class="card"><div class="stat-label">Total Orders</div><div class="stat-value">${orders.length}</div><div class="stat-note">Saved sales records</div></div>
+ <div class="card"><div class="stat-label">Recorded Revenue</div><div class="stat-value">${currency(revenue)}</div><div class="stat-note">Based on recorded orders</div></div>
+ </div>
+ <div class="grid2">
+ <div class="card"><h3 class="card-title">Business Workspace</h3><p style="font-size:12px;color:var(--muted);line-height:1.8">Manage your products, customers, orders, expenses, communications and business operations from one central workspace.</p><div class="quick-grid">
+ <button class="quick" onclick="goTo('Products & Inventory')"><span>▣</span><strong>Products</strong></button>
+ <button class="quick" onclick="goTo('Customers (CRM)')"><span>♙</span><strong>Customers</strong></button>
+ <button class="quick" onclick="goTo('Orders & Sales')"><span>🛍</span><strong>Sales</strong></button>
+ <button class="quick" onclick="goTo('Invoices & Payments')"><span>▤</span><strong>Invoices</strong></button>
+ </div></div>
+ <div class="card"><h3 class="card-title">Low Stock Alerts</h3>${products.filter(p=>Number(p["Stock Quantity"]||0)<=Number(p["Low Stock Alert"]||0)).length?products.filter(p=>Number(p["Stock Quantity"]||0)<=Number(p["Low Stock Alert"]||0)).map(p=>`<p style="font-size:11px">${escapeHTML(p["Product Name"])} — ${p["Stock Quantity"]} remaining</p>`).join(""):'<div class="empty">No low-stock alerts yet.</div>'}</div>
+ </div>
+ <div class="card" style="margin-bottom:17px"><h3 class="card-title">All Business Modules</h3><div class="module-grid">${moduleList().filter(n=>n!=="Overview").map(moduleCard).join("")}</div></div>
+ <div class="card"><h3 class="card-title">Recent Orders</h3>${renderTable("Orders & Sales",orders.slice(-5).reverse(),false)}</div>`;
+}
+function escapeHTML(v){
+ return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+function renderModule(name){
+ const list=getRecords(name),hasFields=!!fields[name];
+ const isSettings=["Security & Settings","Subscription & Billing","Roles & Permissions","App Integrations","WhatsApp Integration","Email Management"].includes(name);
+ $("page").innerHTML=`
+ <div class="heading"><div><h1>${escapeHTML(name)}</h1><p>${escapeHTML(descriptions[name])}</p></div><button class="secondary" onclick="goTo('Overview')">← Overview</button></div>
+ <div class="stats">
+ <div class="card"><div class="stat-label">Total Records</div><div class="stat-value">${list.length}</div><div class="stat-note">Saved in this workspace</div></div>
+ <div class="card"><div class="stat-label">Module Status</div><div class="stat-value" style="font-size:17px">Available</div><div class="stat-note">Interface ready</div></div>
+ <div class="card"><div class="stat-label">Storage</div><div class="stat-value" style="font-size:17px">Browser</div><div class="stat-note">Local records</div></div>
+ <div class="card"><div class="stat-label">Integration</div><div class="stat-value" style="font-size:17px">Pending</div><div class="stat-note">Backend connection required</div></div>
+ </div>
+ <div class="card">
+ <div class="toolbar"><div><h3 class="card-title" style="margin:0">${escapeHTML(name)} Records</h3><span style="font-size:10px;color:var(--muted)">Add and manage your information</span></div>
+ <div style="display:flex;gap:8px;flex-wrap:wrap"><input class="field" style="width:145px" id="recordSearch" placeholder="Search records..." oninput="filterRecords()"><button class="secondary" onclick="exportCSV()">Export CSV</button>${hasFields?'<button class="primary" onclick="openForm()">＋ Add New</button>':''}</div></div>
+ <div id="recordsTable">${renderTable(name,list)}</div>
+ </div>
+ ${isSettings?`<div class="card" style="margin-top:15px"><h3 class="card-title">Connection & Configuration</h3><p style="font-size:12px;color:var(--muted);line-height:1.8">This module has its management interface. External service connections, payment providers, team access controls and live communication require their respective secure backend integrations.</p></div>`:""}
+ `;
+}
+function renderTable(name,list,actions=true){
+ const cols=(fields[name]||[]).map(f=>f[0]);
+ if(!list.length)return '<div class="empty">No records yet. Add your first record to get started.</div>';
+ const visible=cols.slice(0,5);
+ return `<div class="table-wrap"><table><thead><tr>${visible.map(c=>`<th>${escapeHTML(c)}</th>`).join("")}<th>Actions</th></tr></thead><tbody>
+ ${list.map(r=>`<tr>${visible.map(c=>`<td>${escapeHTML(r[c]||"—")}</td>`).join("")}<td><div class="actions">${actions?`<button class="small-btn" onclick="editRecord('${r._id}')">Edit</button><button class="small-btn" style="color:var(--red)" onclick="deleteRecord('${r._id}')">Delete</button>`:'<span class="status">Saved</span>'}</div></td></tr>`).join("")}
+ </tbody></table></div>`;
+}
+function filterRecords(){
+ const q=$("recordSearch").value.toLowerCase();
+ const list=getRecords(currentModule).filter(r=>Object.values(r).some(v=>String(v).toLowerCase().includes(q)));
+ $("recordsTable").innerHTML=renderTable(currentModule,list);
+}
+function openForm(id=null){
+ if(!fields[currentModule])return notify("This module is awaiting its integration.");
+ editingId=id;
+ const old=id?getRecords(currentModule).find(r=>r._id===id):{};
+ $("modalTitle").textContent=id?"Edit Record":"Add "+currentModule+" Record";
+ $("formFields").innerHTML=fields[currentModule].map(([label,type])=>{
+  let input;
+  if(type==="textarea")input=`<textarea class="field" name="${escapeHTML(label)}" rows="3">${escapeHTML(old?.[label]||"")}</textarea>`;
+  else if(type.startsWith("select:"))input=`<select class="field" name="${escapeHTML(label)}">${type.slice(7).split(",").map(o=>`<option ${old?.[label]===o?"selected":""}>${o}</option>`).join("")}</select>`;
+  else input=`<input class="field" name="${escapeHTML(label)}" type="${type}" value="${escapeHTML(old?.[label]||"")}" ${type==="number"?'step="any"':""}>`;
+  return `<div class="form-group ${type==="textarea"?"full":""}"><label>${escapeHTML(label)}</label>${input}</div>`;
+ }).join("");
+ $("modal").classList.add("show");
+}
+function closeModal(){$("modal").classList.remove("show");editingId=null}
+function saveRecord(e){
+ e.preventDefault();
+ const data=Object.fromEntries(new FormData(e.target).entries());
+ if(Object.values(data).every(v=>!String(v).trim()))return notify("Enter some information first.");
+ const list=getRecords(currentModule);
+ if(editingId){
+  const i=list.findIndex(r=>r._id===editingId);
+  if(i>=0)list[i]={...list[i],...data};
+ }else list.push({...data,_id:Date.now().toString()});
+ records[currentModule]=list;saveRecordsToStorage();closeModal();renderModule(currentModule);notify("Record saved successfully.");
+}
+function editRecord(id){openForm(id)}
+function deleteRecord(id){
+ if(!confirm("Are you sure you want to delete this record?"))return;
+ records[currentModule]=getRecords(currentModule).filter(r=>r._id!==id);
+ saveRecordsToStorage();renderModule(currentModule);notify("Record deleted.");
+}
+function exportCSV(){
+ const list=getRecords(currentModule),cols=(fields[currentModule]||[]).map(f=>f[0]);
+ if(!list.length)return notify("There are no records to export.");
+ const csv=[cols.join(","),...list.map(r=>cols.map(c=>'"'+String(r[c]??"").replace(/"/g,'""')+'"').join(","))].join("\n");
+ const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
+ const url=URL.createObjectURL(blob),a=document.createElement("a");
+ a.href=url;a.download=currentModule.toLowerCase().replace(/[^a-z0-9]+/g,"-")+".csv";a.click();URL.revokeObjectURL(url);
+}
 function toggleTheme(){
  document.body.classList.toggle("light");
  localStorage.setItem("bizora_theme",document.body.classList.contains("light")?"light":"dark");
 }
-if(localStorage.getItem("bizora_theme")==="light")document.body.classList.add("light");
-
 function toggleMenu(force){
- const sidebar=document.getElementById("sidebar");
- const overlay=document.getElementById("overlay");
- const open=force===false?false:!sidebar.classList.contains("open");
- sidebar.classList.toggle("open",open);
- overlay.classList.toggle("show",open);
+ const open=force===false?false:!$("sidebar").classList.contains("open");
+ $("sidebar").classList.toggle("open",open);$("overlay").classList.toggle("show",open);
 }
-
+let toastTimer;
 function notify(message){
- const toast=document.getElementById("toast");
- toast.textContent=message;
- toast.style.display="block";
- clearTimeout(window.toastTimer);
- window.toastTimer=setTimeout(()=>toast.style.display="none",2800);
+ const t=$("toast");t.textContent=message;t.style.display="block";
+ clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.style.display="none",2800);
 }
-
-function searchTools(value){
- const q=value.toLowerCase().trim();
- if(!q){renderModules();return;}
- renderModules(moduleData.filter(item=>
-  item[0].toLowerCase().includes(q)||item[2].toLowerCase().includes(q)
- ));
-}
-
-/* START AUTH CHECK */
+if(localStorage.getItem("bizora_theme")==="light")document.body.classList.add("light");
+loadRecords();
 initializeAuth();
 </script>
 </body>
