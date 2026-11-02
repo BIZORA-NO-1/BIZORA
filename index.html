@@ -330,13 +330,102 @@ function openForm(id,record=null){
  document.getElementById("modalBack").classList.add("show");
 }
 function closeModal(){document.getElementById("modalBack").classList.remove("show")}
-function saveRecord(e){
- e.preventDefault();let id=activeFormModule,form=new FormData(e.target),obj={};
+async function saveRecord(e){
+ e.preventDefault();
+
+ let id=activeFormModule,
+ form=new FormData(e.target),
+ obj={};
+
  for(let [k,v] of form.entries())obj[k]=v;
+
  obj.id=editingId||("r"+Date.now());
- let data=list(id),index=data.findIndex(x=>x.id===obj.id);
- if(index>=0)data[index]=obj;else data.push(obj);
- saveList(id,data);closeModal();renderPage();toast(index>=0?"Record updated.":"Record saved.");
+
+ // Supabase connection for Products
+ if(id==="products"){
+
+  if(!sb || !currentUser){
+   toast("Please sign in first.");
+   return;
+  }
+
+  let productData={
+   user_id:currentUser.id,
+   name:obj.name||"",
+   sku:obj.sku||null,
+   category:obj.category||null,
+   price:Number(obj.price||0),
+   cost:Number(obj.cost||0),
+   stock:Number(obj.stock||0),
+   min_stock:Number(obj.minStock||0),
+   supplier:obj.supplier||null,
+   description:obj.description||null
+  };
+
+  try{
+   let result;
+
+   if(editingId && !String(editingId).startsWith("r")){
+    result=await sb.from("products")
+     .update(productData)
+     .eq("id",editingId)
+     .eq("user_id",currentUser.id)
+     .select()
+     .single();
+   }else{
+    result=await sb.from("products")
+     .insert(productData)
+     .select()
+     .single();
+   }
+
+   if(result.error)throw result.error;
+
+   let saved=result.data;
+
+   let product={
+    id:saved.id,
+    name:saved.name,
+    sku:saved.sku,
+    category:saved.category,
+    price:saved.price,
+    cost:saved.cost,
+    stock:saved.stock,
+    minStock:saved.min_stock,
+    supplier:saved.supplier,
+    description:saved.description
+   };
+
+   let data=list(id);
+   let index=data.findIndex(x=>x.id===editingId||x.id===product.id);
+
+   if(index>=0)data[index]=product;
+   else data.push(product);
+
+   saveList(id,data);
+   closeModal();
+   renderPage();
+   toast("Product saved to Supabase.");
+
+  }catch(error){
+   console.error(error);
+   toast("Product save failed: "+error.message);
+  }
+
+  return;
+ }
+
+ // Existing save system for other modules
+ let data=list(id),
+ index=data.findIndex(x=>x.id===obj.id);
+
+ if(index>=0)data[index]=obj;
+ else data.push(obj);
+
+ saveList(id,data);
+ closeModal();
+ renderPage();
+ toast(index>=0?"Record updated.":"Record saved.");
 }
 function editRecord(id,rid){let r=list(id).find(x=>x.id===rid);if(r)openForm(id,r)}
 function deleteRecord(id,rid){if(!confirm("Delete this record?"))return;saveList(id,list(id).filter(x=>x.id!==rid));renderPage();toast("Record deleted.")}
