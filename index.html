@@ -512,10 +512,128 @@ async function handleAuth(e){
  if(res.error){toast(res.error.message);return}
  if(res.data.user){currentUser=res.data.user;setUser(currentUser);document.getElementById("authScreen").style.display="none";toast(authMode==="login"?"Signed in successfully.":"Account created.");}
 }
-function setUser(u){document.getElementById("userEmail").textContent=u.email||"Local workspace";document.getElementById("userName").textContent=u.user_metadata?.full_name||"Business Owner";document.getElementById("userAvatar").textContent=(u.email||"B").charAt(0).toUpperCase()}
-function continueDemo(){document.getElementById("authScreen").style.display="none";currentUser=null;toast("Demo workspace opened.")}
-async function signOut(){if(sb&&currentUser)await sb.auth.signOut();currentUser=null;document.getElementById("userName").textContent="Business Owner";toast("Signed out of account.")}
+function setUser(u){
+  currentUser = u || null;
+
+  document.getElementById("userEmail").textContent =
+    u?.email || "Local workspace";
+
+  document.getElementById("userName").textContent =
+    u?.user_metadata?.full_name || "Business Owner";
+
+  document.getElementById("userAvatar").textContent =
+    (u?.email || "B").charAt(0).toUpperCase();
+
+  const authButton = document.querySelector(".sidebar-bottom button");
+  if(authButton){
+    authButton.textContent = u ? "↪ Sign out" : "↪ Sign in";
+  }
+}
+
+function showAuthScreen(){
+  authMode = "login";
+
+  document.getElementById("authTitle").textContent = "Welcome back";
+  document.getElementById("authSubmit").textContent = "Sign in";
+
+  document.getElementById("authSwitch").innerHTML =
+    'New here? <a href="#" onclick="toggleAuthMode(event)">Create an account</a>';
+
+  document.getElementById("authScreen").style.display = "grid";
+}
+
+async function handleAuth(e){
+  e.preventDefault();
+
+  if(!sb){
+    toast("Supabase is unavailable. Please try again.");
+    return;
+  }
+
+  const email = document.getElementById("authEmail").value.trim();
+  const password = document.getElementById("authPassword").value;
+
+  try{
+    const res = authMode === "login"
+      ? await sb.auth.signInWithPassword({email, password})
+      : await sb.auth.signUp({email, password});
+
+    if(res.error){
+      toast(res.error.message);
+      return;
+    }
+
+    if(res.data.session && res.data.user){
+      setUser(res.data.user);
+      document.getElementById("authScreen").style.display = "none";
+      toast(authMode === "login" ? "Signed in successfully." : "Account created.");
+    }else if(res.data.user){
+      toast("Account created. Check your email to confirm, then sign in.");
+    }
+
+  }catch(error){
+    toast(error.message || "Authentication failed.");
+  }
+}
+
+function continueDemo(){
+  setUser(null);
+  document.getElementById("authScreen").style.display = "none";
+  toast("Demo workspace opened.");
+}
+
+async function signOut(){
+  try{
+    if(sb && currentUser){
+      const {error} = await sb.auth.signOut();
+      if(error) throw error;
+    }
+
+    setUser(null);
+    showAuthScreen();
+    toast("Signed out. Please sign in again.");
+
+  }catch(error){
+    toast(error.message || "Sign out failed.");
+  }
+}
+
 async function initAuth(){
+  if(!sb){
+    setUser(null);
+    showAuthScreen();
+    return;
+  }
+
+  sb.auth.onAuthStateChange((event, session)=>{
+    if(session){
+      setUser(session.user);
+      document.getElementById("authScreen").style.display = "none";
+    }else if(event === "SIGNED_OUT"){
+      setUser(null);
+      showAuthScreen();
+    }
+  });
+
+  try{
+    const {data, error} = await sb.auth.getSession();
+
+    if(error) throw error;
+
+    if(data.session){
+      setUser(data.session.user);
+      document.getElementById("authScreen").style.display = "none";
+    }else{
+      setUser(null);
+      showAuthScreen();
+    }
+
+  }catch(error){
+    console.log(error);
+    setUser(null);
+    showAuthScreen();
+  }
+}
  if(!sb)return;
  try{let {data}=await sb.auth.getSession();if(data.session){currentUser=data.session.user;setUser(currentUser)}else{document.getElementById("authScreen").style.display="grid"}
  sb.auth.onAuthStateChange((_event,session)=>{if(session){currentUser=session.user;setUser(currentUser)}})
