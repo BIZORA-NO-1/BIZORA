@@ -115,13 +115,27 @@ tr:last-child td{border-bottom:0}
 .auth-card input{width:100%;padding:12px;margin:7px 0 12px;background:var(--panel2);border:1px solid var(--border);border-radius:9px;color:var(--text)}
 @media(max-width:1050px){.stats{grid-template-columns:repeat(2,1fr)}.cards{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:760px){
- .sidebar{transform:translateX(-100%);transition:.25s}.sidebar.open{transform:translateX(0)}
- .main{margin-left:0;width:100%}.mobile-menu{display:block}
- .topbar{padding:0 13px;height:66px}.content{padding:16px}
- .search{width:37vw}.grid2{grid-template-columns:1fr}.quick-grid{grid-template-columns:repeat(2,1fr)}
- .cards{grid-template-columns:1fr 1fr}.welcome{align-items:flex-start;flex-direction:column}
+ .sidebar{transform:translateX(-100%);transition:.25s}
+ .sidebar.open{transform:translateX(0)}
+ .main{margin-left:0;width:100%}
+ .mobile-menu{display:block}
+ .topbar{padding:0 13px;height:66px}
+ .content{padding:16px}
+ .search{width:37vw}
+ .grid2{grid-template-columns:1fr}
+ .quick-grid{grid-template-columns:repeat(2,1fr)}
+ .cards{grid-template-columns:1fr 1fr}
+ .welcome{align-items:flex-start;flex-direction:column}
 }
-@media(max-width:430px){.stats{gap:9px}.stat{padding:12px}.stat-value{font-size:21px}.cards{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}.page-heading{font-size:16px}}
+@media(max-width:430px){
+ .stats{gap:9px}
+ .stat{padding:12px}
+ .stat-value{font-size:21px}
+ .cards{grid-template-columns:1fr}
+ .form-grid{grid-template-columns:1fr}
+ .field.full{grid-column:auto}
+ .page-heading{font-size:16px}
+}
 </style>
 </head>
 <body>
@@ -180,8 +194,16 @@ tr:last-child td{border-bottom:0}
 /* BIZORA CONFIGURATION */
 const SUPABASE_URL="https://uidalntoqcwsxxcplctl.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY="sb_publishable_O4cxJaXrIMWfP2S63HQd8w_KD9yHwCF";
-let sb=null, currentUser=null, authMode="login";
-try{if(window.supabase)sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY)}catch(e){console.warn(e)}
+
+let sb=null,currentUser=null,authMode="login";
+
+try{
+ if(window.supabase){
+  sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+ }
+}catch(e){
+ console.warn("Supabase initialization:",e);
+}
 
 const modules=[
  {id:"overview",name:"Overview",icon:"⌂",group:"MAIN",desc:"Your business at a glance"},
@@ -220,132 +242,339 @@ const modules=[
  {id:"help",name:"Help & Support",icon:"?",group:"ADMINISTRATION",desc:"Guides, FAQs and support requests"}
 ];
 
-let activePage="overview", editingId=null, activeFormModule=null;
+let activePage="overview";
+let editingId=null;
+let activeFormModule=null;
 let records={};
-let moduleData={};
+
 let theme=localStorage.getItem("bizora_theme")||"dark";
 if(theme==="light")document.body.classList.add("light");
+
 function loadData(){
- try{records=JSON.parse(localStorage.getItem("bizora_records")||"{}")}catch(e){records={}}
+ try{
+  records=JSON.parse(localStorage.getItem("bizora_records")||"{}");
+ }catch(e){
+  records={};
+ }
 }
-function saveData(){localStorage.setItem("bizora_records",JSON.stringify(records))}
-function list(id){return records[id]||[]}
-function saveList(id,data){records[id]=data;saveData()}
-function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
-function money(n){return "Rs. "+Number(n||0).toLocaleString("en-PK")}
-function toast(msg){let t=document.getElementById("toast");t.textContent=msg;t.style.display="block";clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>t.style.display="none",2600)}
-function toggleTheme(){document.body.classList.toggle("light");theme=document.body.classList.contains("light")?"light":"dark";localStorage.setItem("bizora_theme",theme)}
-function toggleSidebar(){document.getElementById("sidebar").classList.toggle("open")}
-function getModule(id){return modules.find(m=>m.id===id)}
+
+function saveData(){
+ localStorage.setItem("bizora_records",JSON.stringify(records));
+}
+
+function list(id){
+ return records[id]||[];
+}
+
+function saveList(id,data){
+ records[id]=data;
+ saveData();
+}
+
+function esc(s){
+ return String(s??"").replace(/[&<>"']/g,c=>({
+  "&":"&amp;",
+  "<":"&lt;",
+  ">":"&gt;",
+  '"':"&quot;",
+  "'":"&#39;"
+ }[c]));
+}
+
+function money(n){
+ return "Rs. "+Number(n||0).toLocaleString("en-PK");
+}
+
+function toast(msg){
+ let t=document.getElementById("toast");
+ t.textContent=msg;
+ t.style.display="block";
+ clearTimeout(window.toastTimer);
+ window.toastTimer=setTimeout(()=>t.style.display="none",2600);
+}
+
+function toggleTheme(){
+ document.body.classList.toggle("light");
+ theme=document.body.classList.contains("light")?"light":"dark";
+ localStorage.setItem("bizora_theme",theme);
+}
+
+function toggleSidebar(){
+ document.getElementById("sidebar").classList.toggle("open");
+}
+
+function getModule(id){
+ return modules.find(m=>m.id===id);
+}
+
 function renderNav(){
- let nav=document.getElementById("navigation"),groups=[...new Set(modules.map(m=>m.group))];
- nav.innerHTML=groups.map(g=>`<div class="nav-label">${g}</div>`+modules.filter(m=>m.group===g).map(m=>`<button class="${activePage===m.id?"active":""}" onclick="goTo('${m.id}')"><span class="ico">${m.icon}</span>${m.name}</button>`).join("")).join("");
+ let nav=document.getElementById("navigation");
+ let groups=[...new Set(modules.map(m=>m.group))];
+
+ nav.innerHTML=groups.map(g=>
+  `<div class="nav-label">${g}</div>`+
+  modules.filter(m=>m.group===g).map(m=>
+   `<button class="${activePage===m.id?"active":""}" onclick="goTo('${m.id}')"><span class="ico">${m.icon}</span>${m.name}</button>`
+  ).join("")
+ ).join("");
 }
+
 function goTo(id){
- activePage=id;let m=getModule(id);if(!m)return;
- document.getElementById("pageTitle").textContent=m.name;document.getElementById("crumb").textContent=m.name;
- document.getElementById("sidebar").classList.remove("open");renderNav();renderPage();
+ activePage=id;
+ let m=getModule(id);
+ if(!m)return;
+
+ document.getElementById("pageTitle").textContent=m.name;
+ document.getElementById("crumb").textContent=m.name;
+ document.getElementById("sidebar").classList.remove("open");
+
+ renderNav();
+ renderPage();
 }
+
 function renderPage(){
- if(activePage==="overview"){renderOverview();return}
- if(["analytics","salesreports","customerreports","financialreports"].includes(activePage)){renderReports();return}
- if(["assistant","descriptions","marketing","advisor","social","ads","hashtags","livechat","email","whatsapp","integrations","billing","security","help"].includes(activePage)){renderSpecial();return}
- if(activePage==="roles"){renderGeneric(activePage);return}
+ if(activePage==="overview"){
+  renderOverview();
+  return;
+ }
+
+ if(["analytics","salesreports","customerreports","financialreports"].includes(activePage)){
+  renderReports();
+  return;
+ }
+
+ if(["assistant","descriptions","marketing","advisor","social","ads","hashtags","livechat","email","whatsapp","integrations","billing","security","help"].includes(activePage)){
+  renderSpecial();
+  return;
+ }
+
  renderGeneric(activePage);
 }
-function statCard(label,value,icon,foot=""){return `<div class="stat"><div class="stat-top"><span>${label}</span><span class="stat-icon">${icon}</span></div><div class="stat-value">${value}</div><div class="stat-foot">${foot}</div></div>`}
+
+function statCard(label,value,icon,foot=""){
+ return `<div class="stat"><div class="stat-top"><span>${label}</span><span class="stat-icon">${icon}</span></div><div class="stat-value">${value}</div><div class="stat-foot">${foot}</div></div>`;
+}
+
 function renderOverview(){
- let products=list("products"),customers=list("customers"),orders=list("orders"),invoices=list("invoices"),expenses=list("suppliers").filter(x=>x.type==="Expense");
- let sales=orders.filter(x=>x.status!=="Cancelled").reduce((s,x)=>s+Number(x.amount||0),0);
- let profit=sales-products.reduce((s,x)=>s+Number(x.cost||0)*Number(x.stock||0),0);
+ let products=list("products");
+ let customers=list("customers");
+ let orders=list("orders");
  let low=products.filter(x=>Number(x.stock||0)<=Number(x.minStock||0));
+
+ let sales=orders.filter(x=>x.status!=="Cancelled").reduce((s,x)=>s+Number(x.amount||0),0);
+
  document.getElementById("content").innerHTML=`
- <div class="welcome"><div><h1>Welcome to BIZORA 👋</h1><p>Your business overview and workspace activity.</p></div><div class="btn-row"><button class="btn" onclick="exportAll()">↓ Export data</button><button class="btn primary" onclick="openForm('orders')">＋ New sale</button></div></div>
+ <div class="welcome">
+  <div><h1>Welcome to BIZORA 👋</h1><p>Your business overview and workspace activity.</p></div>
+  <div class="btn-row">
+   <button class="btn" onclick="exportAll()">↓ Export data</button>
+   <button class="btn primary" onclick="openForm('orders')">＋ New sale</button>
+  </div>
+ </div>
+
  <div class="stats">
  ${statCard("Total Sales",money(sales),"↗","From saved orders")}
  ${statCard("Products",products.length,"▦","Products in workspace")}
  ${statCard("Customers",customers.length,"♙","Saved customer records")}
  ${statCard("Low Stock",low.length,"⚠","Products at or below threshold")}
  </div>
+
  <div class="grid2">
- <div class="panel"><h2>Business Activity</h2><div class="chart-wrap"><canvas id="overviewChart"></canvas></div></div>
- <div class="panel"><h2>Quick Actions</h2><div class="quick-grid">
- <button class="quick" onclick="openForm('products')"><span>▦</span><strong>Add Product</strong><small>Manage inventory</small></button>
- <button class="quick" onclick="openForm('customers')"><span>♙</span><strong>Add Customer</strong><small>Grow your CRM</small></button>
- <button class="quick" onclick="openForm('orders')"><span>🛒</span><strong>Create Order</strong><small>Record a sale</small></button>
- <button class="quick" onclick="openForm('tasks')"><span>◷</span><strong>Add Task</strong><small>Plan your work</small></button>
- </div><div class="notice">Your workspace is ready. Records entered here are saved in this browser on this device. Cloud synchronization will be connected later.</div></div>
+  <div class="panel"><h2>Business Activity</h2><div class="chart-wrap"><canvas id="overviewChart"></canvas></div></div>
+  <div class="panel">
+   <h2>Quick Actions</h2>
+   <div class="quick-grid">
+    <button class="quick" onclick="openForm('products')"><span>▦</span><strong>Add Product</strong><small>Manage inventory</small></button>
+    <button class="quick" onclick="openForm('customers')"><span>♙</span><strong>Add Customer</strong><small>Grow your CRM</small></button>
+    <button class="quick" onclick="openForm('orders')"><span>🛒</span><strong>Create Order</strong><small>Record a sale</small></button>
+    <button class="quick" onclick="openForm('tasks')"><span>◷</span><strong>Add Task</strong><small>Plan your work</small></button>
+   </div>
+   <div class="notice">Your workspace is ready. Records entered here are saved in this browser on this device. Cloud synchronization will be connected later.</div>
+  </div>
  </div>
+
  <div class="grid2">
- <div class="panel"><div class="toolbar"><h2>Recent Orders</h2><button class="btn" onclick="goTo('orders')">View all</button></div>${simpleTable("orders",orders.slice(-5).reverse(),["order","customer","amount","status"])}</div>
- <div class="panel"><h2>Inventory Alerts</h2>${low.length?low.slice(0,6).map(p=>`<div class="settings-row"><div><strong>${esc(p.name)}</strong><div class="small muted">${esc(p.sku||"No SKU")}</div></div><span class="pill red">${esc(p.stock)} left</span></div>`).join(""):'<div class="empty">No low-stock alerts right now.</div>'}</div>
+  <div class="panel">
+   <div class="toolbar"><h2>Recent Orders</h2><button class="btn" onclick="goTo('orders')">View all</button></div>
+   ${simpleTable("orders",orders.slice(-5).reverse(),["order","customer","amount","status"])}
+  </div>
+  <div class="panel">
+   <h2>Inventory Alerts</h2>
+   ${low.length?low.slice(0,6).map(p=>`<div class="settings-row"><div><strong>${esc(p.name)}</strong><div class="small muted">${esc(p.sku||"No SKU")}</div></div><span class="pill red">${esc(p.stock)} left</span></div>`).join(""):'<div class="empty">No low-stock alerts right now.</div>'}
+  </div>
  </div>
- <div class="panel"><h2>All Business Modules</h2><div class="cards">${modules.filter(m=>m.id!=="overview").map(m=>`<div class="module-card" onclick="goTo('${m.id}')"><div class="big-ico">${m.icon}</div><strong>${m.name}</strong><p>${m.desc}</p></div>`).join("")}</div></div>`;
+
+ <div class="panel">
+  <h2>All Business Modules</h2>
+  <div class="cards">
+   ${modules.filter(m=>m.id!=="overview").map(m=>`<div class="module-card" onclick="goTo('${m.id}')"><div class="big-ico">${m.icon}</div><strong>${m.name}</strong><p>${m.desc}</p></div>`).join("")}
+  </div>
+ </div>`;
+
  let ctx=document.getElementById("overviewChart");
- if(ctx&&window.Chart){if(window.overviewChart)window.overviewChart.destroy();window.overviewChart=new Chart(ctx,{type:"line",data:{labels:["Jan","Feb","Mar","Apr","May","Jun"],datasets:[{label:"Recorded sales",data:[0,0,0,0,0,sales],borderColor:"#8068ff",backgroundColor:"#8068ff22",fill:true,tension:.35}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:getComputedStyle(document.body).getPropertyValue("--muted")}}},scales:{x:{ticks:{color:"#8e9bb5"},grid:{color:"#263550"}},y:{ticks:{color:"#8e9bb5"},grid:{color:"#263550"}}}}})}
+
+ if(ctx&&window.Chart){
+  if(window.overviewChart)window.overviewChart.destroy();
+
+  window.overviewChart=new Chart(ctx,{
+   type:"line",
+   data:{
+    labels:["Jan","Feb","Mar","Apr","May","Jun"],
+    datasets:[{
+     label:"Recorded sales",
+     data:[0,0,0,0,0,sales],
+     borderColor:"#8068ff",
+     backgroundColor:"#8068ff22",
+     fill:true,
+     tension:.35
+    }]
+   },
+   options:{
+    responsive:true,
+    maintainAspectRatio:false,
+    plugins:{
+     legend:{labels:{color:getComputedStyle(document.body).getPropertyValue("--muted")}}
+    },
+    scales:{
+     x:{ticks:{color:"#8e9bb5"},grid:{color:"#263550"}},
+     y:{ticks:{color:"#8e9bb5"},grid:{color:"#263550"}}
+    }
+   }
+  });
+ }
 }
+
 function simpleTable(id,data,cols){
  if(!data.length)return '<div class="empty">No records yet. Add your first record to get started.</div>';
- return `<div class="table-wrap"><table><thead><tr>${cols.map(c=>`<th>${c}</th>`).join("")}</tr></thead><tbody>${data.map(r=>`<tr>${cols.map(c=>`<td>${c==="amount"||c==="price"||c==="cost"?money(r[c]):esc(r[c]||"—")}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+
+ return `<div class="table-wrap"><table>
+ <thead><tr>${cols.map(c=>`<th>${c}</th>`).join("")}</tr></thead>
+ <tbody>${data.map(r=>`<tr>${cols.map(c=>`<td>${c==="amount"||c==="price"||c==="cost"?money(r[c]):esc(r[c]||"—")}</td>`).join("")}</tr>`).join("")}</tbody>
+ </table></div>`;
 }
+
 function renderGeneric(id){
- let m=getModule(id),data=list(id),fields=m.fields||[];
+ let m=getModule(id);
+ if(!m)return;
+
+ let data=list(id);
+ let fields=m.fields||[];
  let cols=fields.slice(0,5).map(f=>f[0]);
+
  if(!cols.length)cols=["name","status","date"];
+
  document.getElementById("content").innerHTML=`
- <div class="welcome"><div><h1>${m.icon} ${m.name}</h1><p>${m.desc}</p></div><button class="btn primary" onclick="openForm('${id}')">＋ Add ${m.name.replace(/s$/,"")}</button></div>
+ <div class="welcome">
+  <div><h1>${m.icon} ${m.name}</h1><p>${m.desc}</p></div>
+  <button class="btn primary" onclick="openForm('${id}')">＋ Add ${m.name.replace(/s$/,"")}</button>
+ </div>
+
  <div class="stats">
  ${statCard("Total Records",data.length,"▤","Saved in this workspace")}
  ${statCard("Last Added",data.length?esc((data[data.length-1].name||data[data.length-1].title||data[data.length-1].customer||"Record").slice(0,18)):"—","◷","Most recent record")}
  ${statCard("Workspace","Active","✓","Local browser storage")}
  ${statCard("Module","Ready","▦","Interface available")}
  </div>
+
  <div class="panel">
- <div class="toolbar"><div><h2>${m.name} Records</h2><span class="muted small">${data.length} record(s)</span></div><div class="btn-row"><input id="tableSearch" placeholder="Filter records..." oninput="filterTable()"><button class="btn" onclick="exportModule('${id}')">↓ CSV</button></div></div>
- <div id="tableHolder">${renderDataTable(id,data)}</div>
+  <div class="toolbar">
+   <div><h2>${m.name} Records</h2><span class="muted small">${data.length} record(s)</span></div>
+   <div class="btn-row">
+    <input id="tableSearch" placeholder="Filter records..." oninput="filterTable()">
+    <button class="btn" onclick="exportModule('${id}')">↓ CSV</button>
+   </div>
+  </div>
+  <div id="tableHolder">${renderDataTable(id,data)}</div>
  </div>
+
  <div class="notice">Records are currently stored in this browser. Supabase database synchronization, multi-user access, and automated workflows will be connected in the backend stage.</div>`;
 }
+
 function renderDataTable(id,data){
- let m=getModule(id),fields=m.fields||[],cols=fields.map(f=>f[0]).slice(0,5);
+ let m=getModule(id);
+ let fields=m.fields||[];
+ let cols=fields.map(f=>f[0]).slice(0,5);
+
  if(!cols.length)cols=["name","status"];
  if(!data.length)return '<div class="empty">No records found. Click “Add” to create your first record.</div>';
- return `<div class="table-wrap"><table><thead><tr>${cols.map(c=>`<th>${esc((fields.find(f=>f[0]===c)||[])[1]||c)}</th>`).join("")}<th>Actions</th></tr></thead><tbody>${data.map(r=>`<tr>${cols.map(c=>`<td>${c==="amount"||c==="price"||c==="cost"||c==="budget"?money(r[c]):c==="status"?`<span class="pill ${statusClass(r[c])}">${esc(r[c]||"—")}</span>`:esc(r[c]||"—")}</td>`).join("")}<td><div class="btn-row"><button class="btn" onclick="editRecord('${id}','${r.id}')">Edit</button><button class="btn danger" onclick="deleteRecord('${id}','${r.id}')">Delete</button></div></td></tr>`).join("")}</tbody></table></div>`;
+
+ return `<div class="table-wrap"><table>
+ <thead><tr>${cols.map(c=>`<th>${esc((fields.find(f=>f[0]===c)||[])[1]||c)}</th>`).join("")}<th>Actions</th></tr></thead>
+ <tbody>${data.map(r=>`<tr>
+ ${cols.map(c=>`<td>${c==="amount"||c==="price"||c==="cost"||c==="budget"?money(r[c]):c==="status"?`<span class="pill ${statusClass(r[c])}">${esc(r[c]||"—")}</span>`:esc(r[c]||"—")}</td>`).join("")}
+ <td><div class="btn-row">
+ <button class="btn" onclick="editRecord('${id}','${r.id}')">Edit</button>
+ <button class="btn danger" onclick="deleteRecord('${id}','${r.id}')">Delete</button>
+ </div></td>
+ </tr>`).join("")}</tbody>
+ </table></div>`;
 }
-function statusClass(s){s=String(s||"").toLowerCase();if(["paid","completed","resolved","active","published","done"].includes(s))return"green";if(["cancelled","overdue","urgent","inactive"].includes(s))return"red";if(["pending","draft","planning","unread","in progress"].includes(s))return"yellow";return"blue"}
+
+function statusClass(s){
+ s=String(s||"").toLowerCase();
+ if(["paid","completed","resolved","active","published","done"].includes(s))return"green";
+ if(["cancelled","overdue","urgent","inactive"].includes(s))return"red";
+ if(["pending","draft","planning","unread","in progress"].includes(s))return"yellow";
+ return"blue";
+}
+
 function filterTable(){
- let q=(document.getElementById("tableSearch")?.value||"").toLowerCase(),data=list(activePage).filter(r=>JSON.stringify(r).toLowerCase().includes(q));
+ let q=(document.getElementById("tableSearch")?.value||"").toLowerCase();
+ let data=list(activePage).filter(r=>JSON.stringify(r).toLowerCase().includes(q));
  document.getElementById("tableHolder").innerHTML=renderDataTable(activePage,data);
 }
+
 function openForm(id,record=null){
- let m=getModule(id);if(!m)return;
- if(!m.fields){toast("This section is a connection workspace.");return}
- activeFormModule=id;editingId=record?.id||null;
+ let m=getModule(id);
+ if(!m)return;
+
+ if(!m.fields){
+  toast("This section is a connection workspace.");
+  return;
+ }
+
+ activeFormModule=id;
+ editingId=record?.id||null;
+
  document.getElementById("modalTitle").textContent=(record?"Edit ":"Add ")+m.name;
+
  document.getElementById("formFields").innerHTML=m.fields.map(f=>{
- let [key,label,type,required,options]=f,val=record?.[key]??"";
- let input=type==="textarea"?`<textarea name="${key}" placeholder="${label}">${esc(val)}</textarea>`:type==="select"?`<select name="${key}">${(options||[]).map(o=>`<option ${val===o?"selected":""}>${o}</option>`).join("")}</select>`:`<input name="${key}" type="${type}" value="${esc(val)}" placeholder="${label}" ${required?"required":""} ${type==="number"?'step="any"':""}>`;
- return `<div class="field ${type==="textarea"?"full":""}"><label>${label}${required?" *":""}</label>${input}</div>`;
+  let [key,label,type,required,options]=f;
+  let val=record?.[key]??"";
+  let input="";
+
+  if(type==="textarea"){
+   input=`<textarea name="${key}" placeholder="${label}">${esc(val)}</textarea>`;
+  }else if(type==="select"){
+   input=`<select name="${key}">${(options||[]).map(o=>`<option ${val===o?"selected":""}>${o}</option>`).join("")}</select>`;
+  }else{
+   input=`<input name="${key}" type="${type}" value="${esc(val)}" placeholder="${label}" ${required?"required":""} ${type==="number"?'step="any"':""}>`;
+  }
+
+  return `<div class="field ${type==="textarea"?"full":""}"><label>${label}${required?" *":""}</label>${input}</div>`;
  }).join("");
+
  document.getElementById("modalBack").classList.add("show");
 }
-function closeModal(){document.getElementById("modalBack").classList.remove("show")}
+
+function closeModal(){
+ document.getElementById("modalBack").classList.remove("show");
+}
+
 async function saveRecord(e){
  e.preventDefault();
 
- let id=activeFormModule,
- form=new FormData(e.target),
- obj={};
+ let id=activeFormModule;
+ let form=new FormData(e.target);
+ let obj={};
 
  for(let [k,v] of form.entries())obj[k]=v;
 
  obj.id=editingId||("r"+Date.now());
 
- // Supabase connection for Products
  if(id==="products"){
-
-  if(!sb || !currentUser){
-   toast("Please sign in first.");
+  if(!sb||!currentUser){
+   toast("Please sign in first to save products.");
    return;
   }
 
@@ -365,7 +594,7 @@ async function saveRecord(e){
   try{
    let result;
 
-   if(editingId && !String(editingId).startsWith("r")){
+   if(editingId&&!String(editingId).startsWith("r")){
     result=await sb.from("products")
      .update(productData)
      .eq("id",editingId)
@@ -415,9 +644,8 @@ async function saveRecord(e){
   return;
  }
 
- // Existing save system for other modules
- let data=list(id),
- index=data.findIndex(x=>x.id===obj.id);
+ let data=list(id);
+ let index=data.findIndex(x=>x.id===obj.id);
 
  if(index>=0)data[index]=obj;
  else data.push(obj);
@@ -427,219 +655,532 @@ async function saveRecord(e){
  renderPage();
  toast(index>=0?"Record updated.":"Record saved.");
 }
-function editRecord(id,rid){let r=list(id).find(x=>x.id===rid);if(r)openForm(id,r)}
-function deleteRecord(id,rid){if(!confirm("Delete this record?"))return;saveList(id,list(id).filter(x=>x.id!==rid));renderPage();toast("Record deleted.")}
+
+function editRecord(id,rid){
+ let r=list(id).find(x=>x.id===rid);
+ if(r)openForm(id,r);
+}
+
+function deleteRecord(id,rid){
+ if(!confirm("Delete this record?"))return;
+ saveList(id,list(id).filter(x=>x.id!==rid));
+ renderPage();
+ toast("Record deleted.");
+}
+
 function exportModule(id){
- let data=list(id);if(!data.length){toast("No records to export.");return}
+ let data=list(id);
+ if(!data.length){
+  toast("No records to export.");
+  return;
+ }
  downloadCSV(id,data);
 }
+
 function downloadCSV(name,data){
  let keys=[...new Set(data.flatMap(x=>Object.keys(x)))];
- let csv=[keys.join(","),...data.map(r=>keys.map(k=>'"'+String(r[k]??"").replace(/"/g,'""')+'"').join(","))].join("\n");
- let a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="bizora-"+name+".csv";a.click();URL.revokeObjectURL(a.href);
+ let csv=[
+  keys.join(","),
+  ...data.map(r=>keys.map(k=>'"'+String(r[k]??"").replace(/"/g,'""')+'"').join(","))
+ ].join("\n");
+
+ let a=document.createElement("a");
+ a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));
+ a.download="bizora-"+name+".csv";
+ a.click();
+ URL.revokeObjectURL(a.href);
 }
-function exportAll(){let all=[];for(let [k,v] of Object.entries(records))for(let r of v)all.push({module:k,...r});if(!all.length){toast("No data to export.");return}downloadCSV("all-business-data",all)}
-function renderReports(){
- let orders=list("orders"),customers=list("customers"),products=list("products"),expenses=list("suppliers").filter(x=>x.type==="Expense");
- let sales=orders.reduce((s,x)=>s+Number(x.amount||0),0),cost=expenses.reduce((s,x)=>s+Number(x.amount||0),0);
- let title=getModule(activePage).name;
- document.getElementById("content").innerHTML=`<div class="welcome"><div><h1>${title}</h1><p>Reports are calculated from records saved in this browser.</p></div><button class="btn" onclick="exportAll()">↓ Export data</button></div>
- <div class="stats">${statCard("Recorded Sales",money(sales),"↗")}${statCard("Expenses",money(cost),"＄")}${statCard("Estimated Difference",money(sales-cost),"∑")}${statCard("Customers",customers.length,"♙")}</div>
- <div class="grid2"><div class="panel"><h2>Sales & Expenses</h2><div class="chart-wrap"><canvas id="reportChart"></canvas></div></div><div class="panel"><h2>Business Summary</h2>
- <div class="settings-row"><span>Orders</span><strong>${orders.length}</strong></div><div class="settings-row"><span>Customers</span><strong>${customers.length}</strong></div><div class="settings-row"><span>Products</span><strong>${products.length}</strong></div><div class="settings-row"><span>Expenses</span><strong>${expenses.length}</strong></div></div></div>
- <div class="panel"><h2>Report data</h2>${simpleTable("orders",orders.slice(-10).reverse(),["order","customer","amount","status"])}</div>
- <div class="notice">These are basic summaries of entered records, not audited financial statements. More advanced filters, date ranges, and live analytics will be connected as the data backend is built.</div>`;
- let c=document.getElementById("reportChart");if(c&&window.Chart){if(window.reportChart)window.reportChart.destroy();window.reportChart=new Chart(c,{type:"bar",data:{labels:["Sales","Expenses"],datasets:[{label:"Amount (PKR)",data:[sales,cost],backgroundColor:["#8068ff","#25c58a"]}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:"#8e9bb5"}},y:{ticks:{color:"#8e9bb5"}}}}})}
-}
-function renderSpecial(){
- let m=getModule(activePage),html="";
- if(activePage==="assistant"){
- html=`<div class="panel"><h2>AI Business Assistant</h2><p>Ask questions about business planning, operations, products, sales, and customer service.</p><div class="field"><label>Your question</label><textarea id="aiQuestion" placeholder="Ask your business question..."></textarea></div><button class="btn primary" onclick="integrationNotice()">✦ Generate response</button><div class="notice">AI provider is not connected yet. Once an AI API is configured, this workspace will send prompts and display real AI responses.</div><h3>Suggested tasks</h3><div class="quick-grid"><button class="quick" onclick="setPrompt('Help me create a business growth plan.')">Growth plan</button><button class="quick" onclick="setPrompt('Analyze my sales performance.')">Sales analysis</button><button class="quick" onclick="setPrompt('Suggest ways to improve customer retention.')">Customer retention</button><button class="quick" onclick="setPrompt('Help me manage my inventory.')">Inventory advice</button></div><div id="aiResult"></div></div>`;
- }else if(["descriptions","marketing","advisor","social","ads","hashtags"].includes(activePage)){
- let tasks={
- descriptions:["Product Description Studio","Create product titles, short descriptions, detailed descriptions, features and SEO copy."],
- marketing:["AI Marketing Studio","Plan campaigns, define audiences, create marketing strategies and review marketing ideas."],
- advisor:["Business Advisor Center","Explore business planning, pricing, operations, customer retention and growth decisions."],
- social:["Social Media Manager","Plan content across social platforms, organize drafts and prepare publishing schedules."],
- ads:["Advertisement Creator","Prepare ad concepts, audience ideas, headlines, calls to action and creative briefs."],
- hashtags:["Hashtag Generator","Organize hashtag research by topic, platform, audience and campaign."]
- };
- html=`<div class="panel"><h2>${tasks[activePage][0]}</h2><p>${tasks[activePage][1]}</p><div class="form-grid"><div class="field"><label>Business / Product name</label><input id="workName" placeholder="Enter name"></div><div class="field"><label>Platform / Category</label><input id="workCategory" placeholder="e.g. Instagram, clothing"></div><div class="field full"><label>Details / Instructions</label><textarea id="workPrompt" placeholder="Describe what you want to create..."></textarea></div></div><div class="btn-row" style="margin-top:13px"><button class="btn primary" onclick="integrationNotice()">✦ Generate with AI</button><button class="btn" onclick="saveDraft()">Save as draft</button></div><div class="notice">The complete workspace interface is ready. Live AI generation will be enabled after an AI provider is connected. Drafts can be saved locally.</div><div id="draftResult"></div></div>`;
- }else if(activePage==="livechat"){
- html=`<div class="panel"><h2>Website Live Chat</h2><p>Live chat inbox and conversation management interface.</p><div class="grid2"><div class="integration"><h3>Conversation Inbox</h3><div class="empty">No live conversations yet.</div></div><div class="integration"><h3>Chat Settings</h3><div class="settings-row"><span>Chat widget</span><span class="pill yellow">Not connected</span></div><div class="settings-row"><span>Agent availability</span><span class="pill green">Ready to configure</span></div><button class="btn primary" onclick="integrationNotice()">Configure chat connection</button></div></div></div>`;
- }else if(activePage==="email"){
- html=`<div class="panel"><h2>Email Management</h2><p>Prepare email templates and manage email workflows.</p><div class="grid2"><div class="integration"><h3>Email Templates</h3><button class="btn primary" onclick="openForm('inbox')">＋ Create email record</button><p>Keep track of customer email conversations in Customer Inbox.</p></div><div class="integration"><h3>Email Account</h3><span class="pill yellow">Connection pending</span><p>SMTP or email provider connection will be configured later.</p><button class="btn" onclick="integrationNotice()">Connect email provider</button></div></div></div>`;
- }else if(activePage==="whatsapp"){
- html=`<div class="panel"><h2>WhatsApp Business Integration</h2><p>Prepare your WhatsApp customer communication workspace.</p><div class="grid3"><div class="integration"><div class="ico">◉</div><h3>Business Account</h3><span class="pill yellow">Not connected</span></div><div class="integration"><div class="ico">✉</div><h3>Message Templates</h3><p class="small">Template management interface</p></div><div class="integration"><div class="ico">♧</div><h3>Customer Chats</h3><p class="small">Conversation inbox interface</p></div></div><div class="notice">Actual WhatsApp messaging requires an approved WhatsApp Business Platform connection and credentials.</div><button class="btn primary" onclick="integrationNotice()">Configure connection</button></div>`;
- }else if(activePage==="integrations"){
- let apps=[["Supabase","Database, authentication and storage","Connected project"],["AI Provider","AI chat and content generation","Pending"],["WhatsApp Business","Customer messaging","Pending"],["Email Provider","Email delivery and inbox","Pending"],["Payment Gateway","Online payments","Pending"],["Social Platforms","Social publishing","Pending"],["Analytics","External analytics","Pending"]];
- html=`<div class="panel"><h2>App Integrations</h2><p>Manage services connected to your BIZORA workspace.</p><div class="cards">${apps.map(a=>`<div class="integration"><div class="ico">⧉</div><h3>${a[0]}</h3><p>${a[1]}</p><span class="pill ${a[2]==="Connected project"?"green":"yellow"}">${a[2]}</span><div style="margin-top:12px"><button class="btn" onclick="integrationNotice()">Configure</button></div></div>`).join("")}</div></div>`;
- }else if(activePage==="billing"){
- html=`<div class="panel"><h2>Subscription & Billing</h2><div class="grid2"><div class="integration"><span class="pill green">Current hosting setup</span><h2>Free development setup</h2><p>Your BIZORA frontend is hosted through GitHub Pages and your current Supabase project is on its Free plan.</p></div><div class="integration"><h3>Billing details</h3><p>No payment gateway is connected.</p><button class="btn" onclick="integrationNotice()">Configure billing</button></div></div><div class="notice">This page is a management interface. It does not charge users or create subscriptions yet.</div></div>`;
- }else if(activePage==="security"){
- html=`<div class="panel"><h2>Security & Workspace Settings</h2>
- <div class="settings-row"><div><strong>Workspace name</strong><div class="small muted">Name displayed in your dashboard</div></div><input id="workspaceName" value="${esc(localStorage.getItem("bizora_workspace")||"BIZORA")}" style="max-width:190px;padding:9px;border-radius:8px;background:var(--panel2);color:var(--text);border:1px solid var(--border)"></div>
- <div class="settings-row"><div><strong>Appearance</strong><div class="small muted">Light or dark theme</div></div><button class="btn" onclick="toggleTheme()">Toggle theme</button></div>
- <div class="settings-row"><div><strong>Local workspace data</strong><div class="small muted">Export your browser records</div></div><button class="btn" onclick="exportAll()">Export CSV</button></div>
- <div class="settings-row"><div><strong>Clear local data</strong><div class="small muted">This permanently removes records from this browser</div></div><button class="btn danger" onclick="clearLocalData()">Clear data</button></div>
- <div class="settings-row"><div><strong>Save workspace name</strong></div><button class="btn primary" onclick="saveWorkspaceName()">Save</button></div></div>`;
- }else if(activePage==="help"){
- html=`<div class="panel"><h2>Help & Support Center</h2><p>Find guidance for using your BIZORA workspace.</p><div class="grid2"><div class="integration"><h3>Getting started</h3><p>Start by adding products, customers, suppliers and orders. Your overview will summarize saved records.</p></div><div class="integration"><h3>Data storage</h3><p>Current demo records are saved in this browser. Cloud database synchronization is a later setup step.</p></div><div class="integration"><h3>AI features</h3><p>AI modules have their workspace interfaces. Connect an AI provider to activate generation.</p></div><div class="integration"><h3>Contact support</h3><button class="btn primary" onclick="openForm('support')">Create support ticket</button></div></div></div>`;
+
+function exportAll(){
+ let all=[];
+ for(let [k,v] of Object.entries(records)){
+  for(let r of v)all.push({module:k,...r});
  }
- document.getElementById("content").innerHTML=`<div class="welcome"><div><h1>${m.icon} ${m.name}</h1><p>${m.desc}</p></div></div>${html}`;
+ if(!all.length){
+  toast("No data to export.");
+  return;
+ }
+ downloadCSV("all-business-data",all);
 }
-function integrationNotice(){toast("Interface ready. Connect the required API/provider in the backend stage.")}
-function setPrompt(t){document.getElementById("aiQuestion").value=t}
+
+function renderReports(){
+ let orders=list("orders");
+ let customers=list("customers");
+ let products=list("products");
+ let expenses=list("suppliers").filter(x=>x.type==="Expense");
+
+ let sales=orders.reduce((s,x)=>s+Number(x.amount||0),0);
+ let cost=expenses.reduce((s,x)=>s+Number(x.amount||0),0);
+ let title=getModule(activePage).name;
+
+ document.getElementById("content").innerHTML=`
+ <div class="welcome">
+  <div><h1>${title}</h1><p>Reports are calculated from records saved in this browser.</p></div>
+  <button class="btn" onclick="exportAll()">↓ Export data</button>
+ </div>
+
+ <div class="stats">
+ ${statCard("Recorded Sales",money(sales),"↗")}
+ ${statCard("Expenses",money(cost),"＄")}
+ ${statCard("Estimated Difference",money(sales-cost),"∑")}
+ ${statCard("Customers",customers.length,"♙")}
+ </div>
+
+ <div class="grid2">
+  <div class="panel"><h2>Sales & Expenses</h2><div class="chart-wrap"><canvas id="reportChart"></canvas></div></div>
+  <div class="panel">
+   <h2>Business Summary</h2>
+   <div class="settings-row"><span>Orders</span><strong>${orders.length}</strong></div>
+   <div class="settings-row"><span>Customers</span><strong>${customers.length}</strong></div>
+   <div class="settings-row"><span>Products</span><strong>${products.length}</strong></div>
+   <div class="settings-row"><span>Expenses</span><strong>${expenses.length}</strong></div>
+  </div>
+ </div>
+
+ <div class="panel"><h2>Report data</h2>${simpleTable("orders",orders.slice(-10).reverse(),["order","customer","amount","status"])}</div>
+
+ <div class="notice">These are basic summaries of entered records, not audited financial statements. More advanced filters, date ranges, and live analytics will be connected as the data backend is built.</div>`;
+
+ let c=document.getElementById("reportChart");
+
+ if(c&&window.Chart){
+  if(window.reportChart)window.reportChart.destroy();
+
+  window.reportChart=new Chart(c,{
+   type:"bar",
+   data:{
+    labels:["Sales","Expenses"],
+    datasets:[{
+     label:"Amount (PKR)",
+     data:[sales,cost],
+     backgroundColor:["#8068ff","#25c58a"]
+    }]
+   },
+   options:{
+    responsive:true,
+    maintainAspectRatio:false,
+    plugins:{legend:{display:false}},
+    scales:{
+     x:{ticks:{color:"#8e9bb5"}},
+     y:{ticks:{color:"#8e9bb5"}}
+    }
+   }
+  });
+ }
+}
+
+function renderSpecial(){
+ let m=getModule(activePage);
+ let html="";
+
+ if(activePage==="assistant"){
+  html=`
+  <div class="panel">
+   <h2>AI Business Assistant</h2>
+   <p>Ask questions about business planning, operations, products, sales, and customer service.</p>
+   <div class="field">
+    <label>Your question</label>
+    <textarea id="aiQuestion" placeholder="Ask your business question..."></textarea>
+   </div>
+   <button class="btn primary" onclick="integrationNotice()">✦ Generate response</button>
+   <div class="notice">AI provider is not connected yet. Once an AI API is configured, this workspace will send prompts and display real AI responses.</div>
+   <h3>Suggested tasks</h3>
+   <div class="quick-grid">
+    <button class="quick" onclick="setPrompt('Help me create a business growth plan.')">Growth plan</button>
+    <button class="quick" onclick="setPrompt('Analyze my sales performance.')">Sales analysis</button>
+    <button class="quick" onclick="setPrompt('Suggest ways to improve customer retention.')">Customer retention</button>
+    <button class="quick" onclick="setPrompt('Help me manage my inventory.')">Inventory advice</button>
+   </div>
+   <div id="aiResult"></div>
+  </div>`;
+ }
+ else if(["descriptions","marketing","advisor","social","ads","hashtags"].includes(activePage)){
+  let tasks={
+   descriptions:["Product Description Studio","Create product titles, short descriptions, detailed descriptions, features and SEO copy."],
+   marketing:["AI Marketing Studio","Plan campaigns, define audiences, create marketing strategies and review marketing ideas."],
+   advisor:["Business Advisor Center","Explore business planning, pricing, operations, customer retention and growth decisions."],
+   social:["Social Media Manager","Plan content across social platforms, organize drafts and prepare publishing schedules."],
+   ads:["Advertisement Creator","Prepare ad concepts, audience ideas, headlines, calls to action and creative briefs."],
+   hashtags:["Hashtag Generator","Organize hashtag research by topic, platform, audience and campaign."]
+  };
+
+  html=`
+  <div class="panel">
+   <h2>${tasks[activePage][0]}</h2>
+   <p>${tasks[activePage][1]}</p>
+   <div class="form-grid">
+    <div class="field"><label>Business / Product name</label><input id="workName" placeholder="Enter name"></div>
+    <div class="field"><label>Platform / Category</label><input id="workCategory" placeholder="e.g. Instagram, clothing"></div>
+    <div class="field full"><label>Details / Instructions</label><textarea id="workPrompt" placeholder="Describe what you want to create..."></textarea></div>
+   </div>
+   <div class="btn-row" style="margin-top:13px">
+    <button class="btn primary" onclick="integrationNotice()">✦ Generate with AI</button>
+    <button class="btn" onclick="saveDraft()">Save as draft</button>
+   </div>
+   <div class="notice">The complete workspace interface is ready. Live AI generation will be enabled after an AI provider is connected. Drafts can be saved locally.</div>
+   <div id="draftResult"></div>
+  </div>`;
+ }
+ else if(activePage==="livechat"){
+  html=`
+  <div class="panel">
+   <h2>Website Live Chat</h2>
+   <p>Live chat inbox and conversation management interface.</p>
+   <div class="grid2">
+    <div class="integration"><h3>Conversation Inbox</h3><div class="empty">No live conversations yet.</div></div>
+    <div class="integration">
+     <h3>Chat Settings</h3>
+     <div class="settings-row"><span>Chat widget</span><span class="pill yellow">Not connected</span></div>
+     <div class="settings-row"><span>Agent availability</span><span class="pill green">Ready to configure</span></div>
+     <button class="btn primary" onclick="integrationNotice()">Configure chat connection</button>
+    </div>
+   </div>
+  </div>`;
+ }
+ else if(activePage==="email"){
+  html=`
+  <div class="panel">
+   <h2>Email Management</h2>
+   <p>Prepare email templates and manage email workflows.</p>
+   <div class="grid2">
+    <div class="integration">
+     <h3>Email Templates</h3>
+     <button class="btn primary" onclick="openForm('inbox')">＋ Create email record</button>
+     <p>Keep track of customer email conversations in Customer Inbox.</p>
+    </div>
+    <div class="integration">
+     <h3>Email Account</h3>
+     <span class="pill yellow">Connection pending</span>
+     <p>SMTP or email provider connection will be configured later.</p>
+     <button class="btn" onclick="integrationNotice()">Connect email provider</button>
+    </div>
+   </div>
+  </div>`;
+ }
+ else if(activePage==="whatsapp"){
+  html=`
+  <div class="panel">
+   <h2>WhatsApp Business Integration</h2>
+   <p>Prepare your WhatsApp customer communication workspace.</p>
+   <div class="grid3">
+    <div class="integration"><div class="ico">◉</div><h3>Business Account</h3><span class="pill yellow">Not connected</span></div>
+    <div class="integration"><div class="ico">✉</div><h3>Message Templates</h3><p class="small">Template management interface</p></div>
+    <div class="integration"><div class="ico">♧</div><h3>Customer Chats</h3><p class="small">Conversation inbox interface</p></div>
+   </div>
+   <div class="notice">Actual WhatsApp messaging requires an approved WhatsApp Business Platform connection and credentials.</div>
+   <button class="btn primary" onclick="integrationNotice()">Configure connection</button>
+  </div>`;
+ }
+ else if(activePage==="integrations"){
+  let apps=[
+   ["Supabase","Database, authentication and storage","Connected project"],
+   ["AI Provider","AI chat and content generation","Pending"],
+   ["WhatsApp Business","Customer messaging","Pending"],
+   ["Email Provider","Email delivery and inbox","Pending"],
+   ["Payment Gateway","Online payments","Pending"],
+   ["Social Platforms","Social publishing","Pending"],
+   ["Analytics","External analytics","Pending"]
+  ];
+
+  html=`
+  <div class="panel">
+   <h2>App Integrations</h2>
+   <p>Manage services connected to your BIZORA workspace.</p>
+   <div class="cards">
+    ${apps.map(a=>`
+     <div class="integration">
+      <div class="ico">⧉</div>
+      <h3>${a[0]}</h3>
+      <p>${a[1]}</p>
+      <span class="pill ${a[2]==="Connected project"?"green":"yellow"}">${a[2]}</span>
+      <div style="margin-top:12px"><button class="btn" onclick="integrationNotice()">Configure</button></div>
+     </div>
+    `).join("")}
+   </div>
+  </div>`;
+ }
+ else if(activePage==="billing"){
+  html=`
+  <div class="panel">
+   <h2>Subscription & Billing</h2>
+   <div class="grid2">
+    <div class="integration">
+     <span class="pill green">Current hosting setup</span>
+     <h2>Free development setup</h2>
+     <p>Your BIZORA frontend is hosted through GitHub Pages and your current Supabase project is on its Free plan.</p>
+    </div>
+    <div class="integration">
+     <h3>Billing details</h3>
+     <p>No payment gateway is connected.</p>
+     <button class="btn" onclick="integrationNotice()">Configure billing</button>
+    </div>
+   </div>
+   <div class="notice">This page is a management interface. It does not charge users or create subscriptions yet.</div>
+  </div>`;
+ }
+ else if(activePage==="security"){
+  html=`
+  <div class="panel">
+   <h2>Security & Workspace Settings</h2>
+   <div class="settings-row">
+    <div><strong>Workspace name</strong><div class="small muted">Name displayed in your dashboard</div></div>
+    <input id="workspaceName" value="${esc(localStorage.getItem("bizora_workspace")||"BIZORA")}" style="max-width:190px;padding:9px;border-radius:8px;background:var(--panel2);color:var(--text);border:1px solid var(--border)">
+   </div>
+   <div class="settings-row">
+    <div><strong>Appearance</strong><div class="small muted">Light or dark theme</div></div>
+    <button class="btn" onclick="toggleTheme()">Toggle theme</button>
+   </div>
+   <div class="settings-row">
+    <div><strong>Local workspace data</strong><div class="small muted">Export your browser records</div></div>
+    <button class="btn" onclick="exportAll()">Export CSV</button>
+   </div>
+   <div class="settings-row">
+    <div><strong>Clear local data</strong><div class="small muted">This permanently removes records from this browser</div></div>
+    <button class="btn danger" onclick="clearLocalData()">Clear data</button>
+   </div>
+   <div class="settings-row">
+    <div><strong>Save workspace name</strong></div>
+    <button class="btn primary" onclick="saveWorkspaceName()">Save</button>
+   </div>
+  </div>`;
+ }
+ else if(activePage==="help"){
+  html=`
+  <div class="panel">
+   <h2>Help & Support Center</h2>
+   <p>Find guidance for using your BIZORA workspace.</p>
+   <div class="grid2">
+    <div class="integration"><h3>Getting started</h3><p>Start by adding products, customers, suppliers and orders. Your overview will summarize saved records.</p></div>
+    <div class="integration"><h3>Data storage</h3><p>Current demo records are saved in this browser. Cloud database synchronization is a later setup step.</p></div>
+    <div class="integration"><h3>AI features</h3><p>AI modules have their workspace interfaces. Connect an AI provider to activate generation.</p></div>
+    <div class="integration"><h3>Contact support</h3><button class="btn primary" onclick="openForm('support')">Create support ticket</button></div>
+   </div>
+  </div>`;
+ }
+
+ document.getElementById("content").innerHTML=`
+ <div class="welcome"><div><h1>${m.icon} ${m.name}</h1><p>${m.desc}</p></div></div>
+ ${html}`;
+}
+
+function integrationNotice(){
+ toast("Interface ready. Connect the required API/provider in the backend stage.");
+}
+
+function setPrompt(t){
+ document.getElementById("aiQuestion").value=t;
+}
+
 function saveDraft(){
- let title=document.getElementById("workName")?.value||"Untitled draft",content=document.getElementById("workPrompt")?.value||"",category=document.getElementById("workCategory")?.value||"";
- let drafts=JSON.parse(localStorage.getItem("bizora_drafts")||"[]");drafts.push({title,category,content,module:activePage,date:new Date().toISOString()});localStorage.setItem("bizora_drafts",JSON.stringify(drafts));
- document.getElementById("draftResult").innerHTML='<div class="notice">Draft saved in this browser.</div>';toast("Draft saved.");
+ let title=document.getElementById("workName")?.value||"Untitled draft";
+ let content=document.getElementById("workPrompt")?.value||"";
+ let category=document.getElementById("workCategory")?.value||"";
+
+ let drafts=JSON.parse(localStorage.getItem("bizora_drafts")||"[]");
+
+ drafts.push({
+  title,
+  category,
+  content,
+  module:activePage,
+  date:new Date().toISOString()
+ });
+
+ localStorage.setItem("bizora_drafts",JSON.stringify(drafts));
+
+ document.getElementById("draftResult").innerHTML='<div class="notice">Draft saved in this browser.</div>';
+ toast("Draft saved.");
 }
-function saveWorkspaceName(){localStorage.setItem("bizora_workspace",document.getElementById("workspaceName").value||"BIZORA");toast("Workspace name saved.")}
-function clearLocalData(){if(!confirm("Are you sure? This will delete all BIZORA records stored in this browser."))return;records={};saveData();renderPage();toast("Local records cleared.")}
+
+function saveWorkspaceName(){
+ localStorage.setItem("bizora_workspace",document.getElementById("workspaceName").value||"BIZORA");
+ toast("Workspace name saved.");
+}
+
+function clearLocalData(){
+ if(!confirm("Are you sure? This will delete all BIZORA records stored in this browser."))return;
+ records={};
+ saveData();
+ renderPage();
+ toast("Local records cleared.");
+}
+
 function globalSearch(q){
- if(!q.trim())return;
- let matches=modules.filter(m=>m.name.toLowerCase().includes(q.toLowerCase())||m.desc.toLowerCase().includes(q.toLowerCase()));
- if(matches.length===1)goTo(matches[0].id);
- else if(matches.length>1){document.getElementById("content").innerHTML=`<h2>Search results</h2><div class="cards">${matches.map(m=>`<div class="module-card" onclick="goTo('${m.id}')"><div class="big-ico">${m.icon}</div><strong>${m.name}</strong><p>${m.desc}</p></div>`).join("")}</div>`}
+ if(!q.trim()){
+  return;
+ }
+
+ let matches=modules.filter(m=>
+  m.name.toLowerCase().includes(q.toLowerCase())||
+  m.desc.toLowerCase().includes(q.toLowerCase())
+ );
+
+ if(matches.length===1){
+  goTo(matches[0].id);
+ }
+ else if(matches.length>1){
+  document.getElementById("content").innerHTML=`
+   <h2>Search results</h2>
+   <div class="cards">
+    ${matches.map(m=>`<div class="module-card" onclick="goTo('${m.id}')"><div class="big-ico">${m.icon}</div><strong>${m.name}</strong><p>${m.desc}</p></div>`).join("")}
+   </div>`;
+ }
 }
-function renderInitial(){loadData();renderNav();renderOverview()}
-function toggleAuthMode(e){e.preventDefault();authMode=authMode==="login"?"signup":"login";document.getElementById("authTitle").textContent=authMode==="login"?"Welcome back":"Create your account";document.getElementById("authSubmit").textContent=authMode==="login"?"Sign in":"Create account";document.getElementById("authSwitch").innerHTML=authMode==="login"?'New here? <a href="#" onclick="toggleAuthMode(event)">Create an account</a>':'Already registered? <a href="#" onclick="toggleAuthMode(event)">Sign in</a>'}
-async function handleAuth(e){
- e.preventDefault();if(!sb){toast("Supabase is unavailable. You can continue in demo mode.");return}
- let email=document.getElementById("authEmail").value,password=document.getElementById("authPassword").value;
- let res=authMode==="login"?await sb.auth.signInWithPassword({email,password}):await sb.auth.signUp({email,password});
- if(res.error){toast(res.error.message);return}
- if(res.data.user){currentUser=res.data.user;setUser(currentUser);document.getElementById("authScreen").style.display="none";toast(authMode==="login"?"Signed in successfully.":"Account created.");}
+
+function renderInitial(){
+ loadData();
+ renderNav();
+ renderOverview();
 }
+
+function toggleAuthMode(e){
+ e.preventDefault();
+
+ authMode=authMode==="login"?"signup":"login";
+
+ document.getElementById("authTitle").textContent=
+  authMode==="login"?"Welcome back":"Create your account";
+
+ document.getElementById("authSubmit").textContent=
+  authMode==="login"?"Sign in":"Create account";
+
+ document.getElementById("authSwitch").innerHTML=
+  authMode==="login"
+  ?'New here? <a href="#" onclick="toggleAuthMode(event)">Create an account</a>'
+  :'Already registered? <a href="#" onclick="toggleAuthMode(event)">Sign in</a>';
+}
+
 function setUser(u){
-  currentUser = u || null;
+ currentUser=u||null;
 
-  document.getElementById("userEmail").textContent =
-    u?.email || "Local workspace";
+ document.getElementById("userEmail").textContent=
+  u?.email||"Local workspace";
 
-  document.getElementById("userName").textContent =
-    u?.user_metadata?.full_name || "Business Owner";
+ document.getElementById("userName").textContent=
+  u?.user_metadata?.full_name||"Business Owner";
 
-  document.getElementById("userAvatar").textContent =
-    (u?.email || "B").charAt(0).toUpperCase();
+ document.getElementById("userAvatar").textContent=
+  (u?.email||"B").charAt(0).toUpperCase();
 
-  const authButton = document.querySelector(".sidebar-bottom button");
-  if(authButton){
-    authButton.textContent = u ? "↪ Sign out" : "↪ Sign in";
-  }
+ const authButton=document.querySelector(".sidebar-bottom button");
+
+ if(authButton){
+  authButton.textContent=u?"↪ Sign out":"↪ Sign in";
+ }
 }
 
 function showAuthScreen(){
-  authMode = "login";
+ authMode="login";
 
-  document.getElementById("authTitle").textContent = "Welcome back";
-  document.getElementById("authSubmit").textContent = "Sign in";
+ document.getElementById("authTitle").textContent="Welcome back";
+ document.getElementById("authSubmit").textContent="Sign in";
 
-  document.getElementById("authSwitch").innerHTML =
-    'New here? <a href="#" onclick="toggleAuthMode(event)">Create an account</a>';
+ document.getElementById("authSwitch").innerHTML=
+  'New here? <a href="#" onclick="toggleAuthMode(event)">Create an account</a>';
 
-  document.getElementById("authScreen").style.display = "grid";
+ document.getElementById("authScreen").style.display="grid";
 }
 
 async function handleAuth(e){
-  e.preventDefault();
+ e.preventDefault();
 
-  if(!sb){
-    toast("Supabase is unavailable. Please try again.");
-    return;
+ if(!sb){
+  toast("Supabase is unavailable. Please try again.");
+  return;
+ }
+
+ const email=document.getElementById("authEmail").value.trim();
+ const password=document.getElementById("authPassword").value;
+
+ try{
+  const res=authMode==="login"
+   ?await sb.auth.signInWithPassword({email,password})
+   :await sb.auth.signUp({email,password});
+
+  if(res.error){
+   toast(res.error.message);
+   return;
   }
 
-  const email = document.getElementById("authEmail").value.trim();
-  const password = document.getElementById("authPassword").value;
-
-  try{
-    const res = authMode === "login"
-      ? await sb.auth.signInWithPassword({email, password})
-      : await sb.auth.signUp({email, password});
-
-    if(res.error){
-      toast(res.error.message);
-      return;
-    }
-
-    if(res.data.session && res.data.user){
-      setUser(res.data.user);
-      document.getElementById("authScreen").style.display = "none";
-      toast(authMode === "login" ? "Signed in successfully." : "Account created.");
-    }else if(res.data.user){
-      toast("Account created. Check your email to confirm, then sign in.");
-    }
-
-  }catch(error){
-    toast(error.message || "Authentication failed.");
+  if(res.data.session&&res.data.user){
+   setUser(res.data.user);
+   document.getElementById("authScreen").style.display="none";
+   toast(authMode==="login"?"Signed in successfully.":"Account created.");
   }
+  else if(res.data.user){
+   toast("Account created. Check your email to confirm, then sign in.");
+  }
+
+ }catch(error){
+  toast(error.message||"Authentication failed.");
+ }
 }
 
 function continueDemo(){
-  setUser(null);
-  document.getElementById("authScreen").style.display = "none";
-  toast("Demo workspace opened.");
+ setUser(null);
+ document.getElementById("authScreen").style.display="none";
+ toast("Demo workspace opened.");
 }
 
 async function signOut(){
-  try{
-    if(sb && currentUser){
-      const {error} = await sb.auth.signOut();
-      if(error) throw error;
-    }
-
-    setUser(null);
-    showAuthScreen();
-    toast("Signed out. Please sign in again.");
-
-  }catch(error){
-    toast(error.message || "Sign out failed.");
+ try{
+  if(sb&&currentUser){
+   const {error}=await sb.auth.signOut();
+   if(error)throw error;
   }
+
+  setUser(null);
+  showAuthScreen();
+  toast("Signed out. Please sign in again.");
+
+ }catch(error){
+  toast(error.message||"Sign out failed.");
+ }
 }
 
 async function initAuth(){
-  if(!sb){
-    setUser(null);
-    showAuthScreen();
-    return;
+ if(!sb){
+  setUser(null);
+  showAuthScreen();
+  return;
+ }
+
+ sb.auth.onAuthStateChange((event,session)=>{
+  if(session){
+   setUser(session.user);
+   document.getElementById("authScreen").style.display="none";
+  }
+  else if(event==="SIGNED_OUT"){
+   setUser(null);
+   showAuthScreen();
+  }
+ });
+
+ try{
+  const {data,error}=await sb.auth.getSession();
+
+  if(error)throw error;
+
+  if(data.session){
+   setUser(data.session.user);
+   document.getElementById("authScreen").style.display="none";
+  }
+  else{
+   setUser(null);
+   showAuthScreen();
   }
 
-  sb.auth.onAuthStateChange((event, session)=>{
-    if(session){
-      setUser(session.user);
-      document.getElementById("authScreen").style.display = "none";
-    }else if(event === "SIGNED_OUT"){
-      setUser(null);
-      showAuthScreen();
-    }
-  });
-
-  try{
-    const {data, error} = await sb.auth.getSession();
-
-    if(error) throw error;
-
-    if(data.session){
-      setUser(data.session.user);
-      document.getElementById("authScreen").style.display = "none";
-    }else{
-      setUser(null);
-      showAuthScreen();
-    }
-
-  }catch(error){
-    console.log(error);
-    setUser(null);
-    showAuthScreen();
-  }
+ }catch(error){
+  console.log(error);
+  setUser(null);
+  showAuthScreen();
+ }
 }
- if(!sb)return;
- try{let {data}=await sb.auth.getSession();if(data.session){currentUser=data.session.user;setUser(currentUser)}else{document.getElementById("authScreen").style.display="grid"}
- sb.auth.onAuthStateChange((_event,session)=>{if(session){currentUser=session.user;setUser(currentUser)}})
- }catch(e){console.log(e)}
-}
-renderInitial();initAuth();
+
+/* START BIZORA */
+renderInitial();
+initAuth();
+
 </script>
 </body>
 </html>
