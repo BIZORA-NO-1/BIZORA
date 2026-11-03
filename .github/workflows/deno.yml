@@ -1,0 +1,31 @@
+name: Deploy BIZORA to Supabase
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'supabase/functions/smart-responder/**'
+      - '.github/workflows/**'
+
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Deploy Smart Responder
+        run: |
+          supabase functions deploy smart-responder \
+            --project-ref uidalntoqcwsxxcplctl
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
